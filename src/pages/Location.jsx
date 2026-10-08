@@ -4,7 +4,7 @@ import Icon from '../components/Icon'
 import { CONTACT } from '../data'
 
 export default function Location() {
-  usePageTitle('Location – ITPL Main Road, Whitefield')
+  usePageTitle('Location')
 
   return (
     <>
@@ -13,14 +13,8 @@ export default function Location() {
         crumb="Location"
         eyebrow="Our location"
         lines={[<>Find us in <em>Whitefield</em>,</>, 'Bengaluru']}
-        facts={[
-          ['Road', 'ITPL Main Road'],
-          ['Area', 'Whitefield, Bengaluru'],
-          ['PIN', '560066'],
-        ]}
         image="balcony-view"
         imageAlt="View over Whitefield from an open balcony at Nayasa"
-        tag="Whitefield, Bengaluru"
       >
         <p>
           Located on ITPL Main Road, Nayasa Premium Co-Living places you in Whitefield, one of

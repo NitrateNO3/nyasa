@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import PageHero, { usePageTitle } from '../components/PageHero'
+import { Link, useSearchParams } from 'react-router-dom'
+import { usePageTitle } from '../components/PageHero'
 import Icon from '../components/Icon'
 import { CONTACT, ENQUIRY_ENDPOINT } from '../data'
 
@@ -11,14 +11,15 @@ const today = () => new Date().toISOString().slice(0, 10)
 function validate(f) {
   const e = {}
   if (f.name.trim().length < 2) e.name = 'Please enter your full name'
-  if (!/^(\+?91[\s-]?)?[6-9]\d{4}[\s-]?\d{5}$/.test(f.phone.trim())) e.phone = 'Enter a valid 10-digit mobile number'
+  if (!/^(\+?91[\s-]?)?[6-9]\d{4}[\s-]?\d{5}$/.test(f.phone.trim()))
+    e.phone = 'Enter a valid 10-digit mobile number'
   if (!f.type) e.type = 'Choose an accommodation type'
   if (!f.date) e.date = 'Pick a date for your visit'
   return e
 }
 
 export default function Contact() {
-  usePageTitle('Book a Visit')
+  usePageTitle('Contact')
   const [params] = useSearchParams()
   const preset = TYPES.includes(params.get('type')) ? params.get('type') : ''
   const [form, setForm] = useState({ name: '', phone: '', type: preset, date: '', message: '' })
@@ -57,67 +58,66 @@ export default function Contact() {
     }
   }
 
+  // One-screen layout: heading, intro and contact details on the left, the visit form on the
+  // right, so the whole form is visible without scrolling.
   return (
-    <>
-      <PageHero
-        index={8}
-        crumb="Contact"
-        eyebrow="Your next home awaits"
-        lines={['Come experience', <em>Nayasa</em>]}
-        facts={[
-          ['Rooms', 'Private & double sharing'],
-          ['Visits', 'Pick a date in the form below'],
-        ]}
-        image="reception-corner"
-        imageAlt="Seating corner at Nayasa with pendant lamps, plants and chairs"
-        tag="ITPL Main Road, Whitefield"
-      >
-        <p>
-          Interested in exploring a private room or double-sharing accommodation? Get in touch with
-          our team to enquire about available rooms, pricing and property visits.
-        </p>
-      </PageHero>
+    <section className="contact-page">
+      <div className="wrap contact-page__grid">
+        <div className="contact-page__text">
+          <nav className="ph__crumbs contact-page__crumbs" aria-label="Breadcrumb">
+            <Link to="/">Home</Link>
+            <span aria-hidden="true">/</span>
+            <span aria-current="page">Contact</span>
+          </nav>
+          <p className="eyebrow ph__fade" style={{ '--i': 0 }}>
+            Your next home awaits
+          </p>
+          <h1 className="ph__title contact-page__title">
+            <span className="line">
+              <span style={{ '--i': 0 }}>Come experience</span>
+            </span>
+            <span className="line">
+              <span style={{ '--i': 1 }}>
+                <em>Nayasa</em>
+              </span>
+            </span>
+          </h1>
+          <p className="contact-page__intro ph__fade" style={{ '--i': 1 }}>
+            Interested in exploring a private room or double-sharing accommodation? Get in touch with our team
+            to enquire about available rooms, pricing and property visits.
+          </p>
 
-    <section className="contact section">
-      <div className="wrap contact__grid">
-        <div className="contact__text">
-          <a className="contact__call" href={CONTACT.phoneHref} data-reveal>
+          <a className="contact__call ph__fade" style={{ '--i': 2 }} href={CONTACT.phoneHref}>
             <span className="contact__call-icon">
               <Icon name="phone" size={22} />
             </span>
             <span>
-              <small>Call now</small>
+              <small>Call Now</small>
               {CONTACT.phone}
             </span>
           </a>
 
-          <dl className="contact__info" data-reveal>
+          <dl className="contact__info ph__fade" style={{ '--i': 3 }}>
             <div>
               <dt>Address</dt>
               <dd>
-                Nayasa Premium Co-Living
+                Nayasa Premium Co-Living, ITPL Main Road,
                 <br />
-                ITPL Main Road, Whitefield
-                <br />
-                Bengaluru – 560066, Karnataka
+                Whitefield, Bengaluru – 560066, Karnataka, India
               </dd>
             </div>
             <div>
-              <dt>Directions</dt>
+              <dt>Google Map</dt>
               <dd>
                 <a href={CONTACT.directions} target="_blank" rel="noopener noreferrer">
-                  Open in Google Maps
+                  Get Directions
                 </a>
               </dd>
-            </div>
-            <div>
-              <dt>Website</dt>
-              <dd>{CONTACT.website}</dd>
             </div>
           </dl>
         </div>
 
-        <div className="form-card" data-reveal>
+        <div className="form-card contact-page__form">
           {status === 'done' ? (
             <div className="form-done">
               <span className="form-done__icon">
@@ -126,13 +126,13 @@ export default function Contact() {
               <h3 className="h3">Thank you, {form.name.split(' ')[0]}.</h3>
               {ENQUIRY_ENDPOINT ? (
                 <p>
-                  Your visit request for <strong>{visitDate}</strong> has been sent. The Nayasa team
-                  will get in touch on {form.phone}.
+                  Your visit request for <strong>{visitDate}</strong> has been sent. The Nayasa team will get
+                  in touch on {form.phone}.
                 </p>
               ) : (
                 <p>
-                  To confirm your visit on <strong>{visitDate}</strong>, please call the Nayasa team
-                  on <a href={CONTACT.phoneHref}>{CONTACT.phone}</a>.
+                  To confirm your visit on <strong>{visitDate}</strong>, please call the Nayasa team on{' '}
+                  <a href={CONTACT.phoneHref}>{CONTACT.phone}</a>.
                 </p>
               )}
               <button className="btn btn--dark" onClick={() => setStatus('idle')}>
@@ -141,18 +141,27 @@ export default function Contact() {
             </div>
           ) : (
             <form onSubmit={submit} noValidate>
-              <h3 className="h3">Schedule a visit</h3>
+              <h2 className="h3">Schedule a Visit</h2>
 
-              <div className={`field ${errors.name ? 'has-error' : ''}`}>
-                <label htmlFor="name">Full Name</label>
-                <input id="name" autoComplete="name" value={form.name} onChange={update('name')} />
-                {errors.name && <span className="field__err">{errors.name}</span>}
-              </div>
+              <div className="form-row">
+                <div className={`field ${errors.name ? 'has-error' : ''}`}>
+                  <label htmlFor="name">Full Name</label>
+                  <input id="name" autoComplete="name" value={form.name} onChange={update('name')} />
+                  {errors.name && <span className="field__err">{errors.name}</span>}
+                </div>
 
-              <div className={`field ${errors.phone ? 'has-error' : ''}`}>
-                <label htmlFor="phone">Mobile Number</label>
-                <input id="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="98xxx xxxxx" value={form.phone} onChange={update('phone')} />
-                {errors.phone && <span className="field__err">{errors.phone}</span>}
+                <div className={`field ${errors.phone ? 'has-error' : ''}`}>
+                  <label htmlFor="phone">Mobile Number</label>
+                  <input
+                    id="phone"
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    value={form.phone}
+                    onChange={update('phone')}
+                  />
+                  {errors.phone && <span className="field__err">{errors.phone}</span>}
+                </div>
               </div>
 
               <fieldset className={`field ${errors.type ? 'has-error' : ''}`}>
@@ -160,7 +169,13 @@ export default function Contact() {
                 <div className="segmented">
                   {TYPES.map((t) => (
                     <label key={t} className={form.type === t ? 'is-active' : ''}>
-                      <input type="radio" name="type" value={t} checked={form.type === t} onChange={update('type')} />
+                      <input
+                        type="radio"
+                        name="type"
+                        value={t}
+                        checked={form.type === t}
+                        onChange={update('type')}
+                      />
                       {t}
                     </label>
                   ))}
@@ -178,7 +193,7 @@ export default function Contact() {
                 <label htmlFor="msg">
                   Message <span className="field__opt">(optional)</span>
                 </label>
-                <textarea id="msg" rows={3} value={form.message} onChange={update('message')} />
+                <textarea id="msg" rows={2} value={form.message} onChange={update('message')} />
               </div>
 
               <button className="btn btn--accent btn--block" disabled={status === 'sending'}>
@@ -194,6 +209,5 @@ export default function Contact() {
         </div>
       </div>
     </section>
-    </>
   )
 }

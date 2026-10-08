@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import PageHero, { usePageTitle } from '../components/PageHero'
 import CtaBand from '../components/CtaBand'
 import Icon from '../components/Icon'
-import { img } from '../data'
+import { CONTACT, img } from '../data'
 
 export default function About() {
   usePageTitle('About Nayasa')
@@ -11,17 +11,16 @@ export default function About() {
     <>
       <PageHero
         index={1}
-        crumb="About"
+        crumb="About Nayasa"
         eyebrow="Welcome to Nayasa"
         lines={["A place you'll love", <><em>coming home</em> to</>]}
         facts={[
-          ['Where', 'ITPL Main Road, Whitefield'],
-          ['Stay', 'Private rooms & double sharing'],
-          ['Support', 'Round the clock'],
+          ['Address', 'ITPL Main Road, Whitefield, Bengaluru – 560066'],
+          ['Phone', <a href={CONTACT.phoneHref}>{CONTACT.phone}</a>],
         ]}
         image="lobby-entrance"
         imageAlt="Nayasa common area with glass doors, a grey sofa and patterned armchair"
-        tag="Professionally managed co-living"
+        tag="A LIFE BY SQFT Brand"
       >
         <p>Finding a place to stay in a busy city shouldn't be complicated.</p>
       </PageHero>
@@ -47,16 +46,18 @@ export default function About() {
 
             <ul className="facts" data-reveal>
               <li>
-                <strong>2</strong>
-                <span>ways to live: private or shared</span>
+                <strong>₹10,000</strong>
+                <span>per bed</span>
+                <span>Double Sharing</span>
+              </li>
+              <li>
+                <strong>₹14,000</strong>
+                <span>per room</span>
+                <span>Private Rooms</span>
               </li>
               <li>
                 <strong>24/7</strong>
-                <span>support, whenever you need it</span>
-              </li>
-              <li>
-                <strong>30</strong>
-                <span>day notice period</span>
+                <span>Support</span>
               </li>
             </ul>
           </div>
@@ -93,14 +94,14 @@ export default function About() {
 
       <section className="section next-steps">
         <div className="wrap">
-          <h2 className="h2" data-reveal>
-            Choose the space <em>that suits you</em>
+          <h2 className="eyebrow" data-reveal>
+            Quick Links
           </h2>
           <div className="next-steps__grid">
             {[
-              { to: '/rooms', title: 'Our Rooms', text: 'Private rooms and double-sharing options, with full pricing.', image: 'private-room-desk' },
-              { to: '/amenities', title: 'Amenities', text: 'Wi-Fi, housekeeping, security, 24/7 support and community.', image: 'shared-kitchen' },
-              { to: '/gallery', title: 'Gallery', text: 'Take a look around the rooms and common areas.', image: 'rooftop-seating' },
+              { to: '/rooms', title: 'Our Rooms', text: 'Rooms Designed Around Your Lifestyle', image: 'private-room-desk' },
+              { to: '/amenities', title: 'Amenities', text: 'The Essentials, Taken Care Of', image: 'shared-kitchen' },
+              { to: '/gallery', title: 'Gallery', text: 'Take a Look Around Nayasa', image: 'rooftop-seating' },
             ].map((c, i) => (
               <Link key={c.to} to={c.to} className="next-card" data-reveal style={{ '--d': `${i * 100}ms` }}>
                 <div className="next-card__img" data-reveal="img" style={{ '--d': `${i * 100}ms` }}>

@@ -61,7 +61,7 @@ export default function Header() {
 
         <nav className="nav" aria-label="Main">
           {NAV.map((n) => (
-            <NavLink key={n.to} to={n.to}>
+            <NavLink key={n.to} to={n.to} end={n.to === '/'}>
               {n.label}
             </NavLink>
           ))}

@@ -14,27 +14,28 @@ export default function Faq() {
       <PageHero
         index={7}
         crumb="FAQ"
-        eyebrow="FAQ"
+        eyebrow="Frequently Asked Questions"
         lines={['Have questions?', <em>We've got answers.</em>]}
-        facts={[
-          ['Answered', `${FAQS.length} common questions`],
-          ['Still unsure?', <a href={CONTACT.phoneHref}>{CONTACT.phone}</a>],
-        ]}
+        facts={[['Contact Number', <a href={CONTACT.phoneHref}>{CONTACT.phone}</a>]]}
         image="lobby-lounge"
         imageAlt="Nayasa lounge with sofa, armchair and the Nayasa logo wall"
-        tag="Rooms, rent & visits"
-      >
-        <p>Everything you need to know about rooms, pricing, rent and visiting Nayasa.</p>
-      </PageHero>
+      />
 
     <section className="faq section">
       <div className="wrap faq__grid">
         <div className="faq__intro">
-          <h2 className="h3" data-reveal>Still unsure about something?</h2>
+          <h2 className="h3" data-reveal>Contact Number</h2>
           <p data-reveal>
-            Call the team on <a href={CONTACT.phoneHref}>{CONTACT.phone}</a>, or{' '}
-            <Link to="/contact">book a visit</Link> and see the property for yourself.
+            <a href={CONTACT.phoneHref}>{CONTACT.phone}</a>
           </p>
+          <div className="faq__actions" data-reveal>
+            <a href={CONTACT.phoneHref} className="btn btn--dark">
+              <Icon name="phone" size={18} /> Call Now
+            </a>
+            <Link to="/contact" className="btn btn--outline">
+              Book a Visit
+            </Link>
+          </div>
         </div>
 
         <div className="faq__list">

@@ -19,14 +19,8 @@ export default function Amenities() {
         crumb="Amenities"
         eyebrow="Everyday convenience"
         lines={['The essentials,', <em>taken care of</em>]}
-        facts={[
-          ['Connectivity', 'High-speed Wi-Fi'],
-          ['Services', 'Housekeeping'],
-          ['Support', 'Round the clock'],
-        ]}
         image="dining-hall"
         imageAlt="Nayasa dining area with wooden tables and benches"
-        tag="5 everyday essentials"
       >
         <p>
           Your living space should make everyday life easier. At Nayasa, essential services and

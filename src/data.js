@@ -12,8 +12,9 @@ export const CONTACT = {
 export const ENQUIRY_ENDPOINT = ''
 
 export const NAV = [
-  { to: '/about', label: 'About' },
-  { to: '/rooms', label: 'Rooms' },
+  { to: '/', label: 'Home' },
+  { to: '/about', label: 'About Nayasa' },
+  { to: '/rooms', label: 'Our Rooms' },
   { to: '/amenities', label: 'Amenities' },
   { to: '/gallery', label: 'Gallery' },
   { to: '/location', label: 'Location' },
@@ -25,6 +26,7 @@ export const ROOM_TYPES = [
   {
     key: 'private',
     label: 'Private Rooms',
+    title: 'Private Rooms',
     formValue: 'Private Room',
     from: '14,000',
     unit: 'per room',
@@ -39,6 +41,7 @@ export const ROOM_TYPES = [
   {
     key: 'sharing',
     label: 'Double Sharing',
+    title: 'Double-Sharing Rooms',
     formValue: 'Double Sharing',
     from: '10,000',
     unit: 'per bed',
@@ -71,23 +74,45 @@ export const AMENITIES = [
   { icon: 'people', title: 'Community Living', text: 'Enjoy the opportunity to meet people and become part of a welcoming residential community.' },
 ]
 
+// All photos come from the client's property folder on Google Drive (IMG_7725 to IMG_7833).
+// Photos showing people are left out until their consent is confirmed.
+// `portrait: true` marks upright photos so the gallery gives them a tall tile.
 export const GALLERY = [
-  { src: 'rooftop-evening', span: 'big', cat: 'Recreation', alt: 'Covered recreational space with hanging swing chairs and terracotta seating in the evening' },
+  { src: 'rooftop-evening', cat: 'Facilities', alt: 'Covered recreational space with hanging swing chairs and terracotta seating in the evening' },
   { src: 'private-room', cat: 'Rooms', alt: 'Private room with single bed and charcoal feature wall' },
   { src: 'lobby-lounge', cat: 'Common Areas', alt: 'Lounge with sofa, armchair and the Nayasa logo wall' },
-  { src: 'recreation-room', cat: 'Recreation', alt: 'Recreational space with a table-tennis table and foosball' },
+  { src: 'sharing-room-wide', cat: 'Rooms', alt: 'Double-sharing room with two beds, a desk and a wooden wardrobe' },
+  { src: 'kitchen-counter', cat: 'Common Areas', alt: 'Kitchen with an L-shaped counter, refrigerator and white wall cabinets' },
+  { src: 'building-facade', cat: 'Building', portrait: true, alt: 'Nayasa building facade with glass balconies and the Nayasa sign' },
+  { src: 'dining-tables', cat: 'Common Areas', alt: 'Dining tables and benches with small plant centrepieces' },
   { src: 'sharing-room', cat: 'Rooms', alt: 'Double-sharing room with two beds and a study desk' },
-  { src: 'shared-kitchen', span: 'wide', cat: 'Common Areas', alt: 'Kitchen area with refrigerator, water dispenser and wooden cabinets' },
-  { src: 'building-exterior', cat: 'Building', alt: 'Nayasa building facade with glass balconies, seen from street level' },
-  { src: 'rooftop-seating', cat: 'Recreation', alt: 'Terracotta lounge chairs around low tables on turf flooring' },
-  { src: 'dining-hall', cat: 'Common Areas', alt: 'Dining area with wooden tables and benches' },
-  { src: 'private-room-window', span: 'big', cat: 'Rooms', alt: 'Private room with a window, curtains and a yellow desk chair' },
+  { src: 'recreation-room', cat: 'Facilities', alt: 'Recreational space with a table-tennis table and foosball' },
+  { src: 'private-room-study', cat: 'Rooms', alt: 'Private room with a desk, yellow chair and a large window' },
+  { src: 'reception-seating', cat: 'Common Areas', alt: 'Seating corner with two chairs, plants and decorative wall art' },
+  { src: 'courtyard-benches', cat: 'Building', alt: 'Courtyard with wooden benches beside palm trees' },
+  { src: 'private-room-window', cat: 'Rooms', alt: 'Private room with a window, curtains and a yellow desk chair' },
+  { src: 'shared-kitchen', cat: 'Common Areas', alt: 'Kitchen area with refrigerator, water dispenser and wooden cabinets' },
+  { src: 'sharing-room-desk', cat: 'Rooms', alt: 'Twin beds on either side of a desk with a yellow chair' },
   { src: 'balcony-view', cat: 'Building', alt: 'Open balcony with glass railing overlooking Whitefield' },
-  { src: 'reception-corner', cat: 'Common Areas', alt: 'Reception corner with pendant lamps, plants and seating' },
-  { src: 'sharing-room-corner', cat: 'Rooms', alt: 'Sharing room with two beds and full-height curtains' },
-  { src: 'courtyard-parking', cat: 'Building', alt: 'Courtyard with benches beside the building' },
+  { src: 'private-room-bright', cat: 'Rooms', alt: 'Private room with a single bed, striped rug and a desk by the window' },
+  { src: 'dining-hall', cat: 'Common Areas', alt: 'Dining area with wooden tables and benches' },
+  { src: 'sharing-room-doorway', cat: 'Rooms', portrait: true, alt: 'Double-sharing room with two beds, seen from the doorway' },
+  { src: 'rooftop-seating', cat: 'Facilities', alt: 'Terracotta lounge chairs around low tables on turf flooring' },
+  { src: 'rooftop-lounge', cat: 'Facilities', alt: 'Covered recreational space at dusk with hanging swing chairs and warm pendant lights' },
+  { src: 'private-room-door', cat: 'Rooms', alt: 'Private room with a single bed, wooden wardrobe and bedside table' },
+  { src: 'building-exterior', cat: 'Building', alt: 'Nayasa building facade with glass balconies, seen from street level' },
+  { src: 'reception-corner', cat: 'Common Areas', alt: 'Seating corner with pendant lamps, plants and chairs' },
+  { src: 'sharing-room-twin', cat: 'Rooms', alt: 'Twin beds placed either side of a shared desk in a double-sharing room' },
+  { src: 'kitchen-corner', cat: 'Common Areas', alt: 'Kitchen corner with refrigerator, water dispenser and wooden cabinets' },
+  { src: 'private-room-wardrobe', cat: 'Rooms', alt: 'Private room with a single bed, mirror, shoe rack and bedside drawers' },
+  { src: 'courtyard-palms', cat: 'Building', alt: 'Courtyard benches with palm trees and the neighbouring buildings behind' },
   { src: 'lobby-entrance', cat: 'Common Areas', alt: 'Common area with glass doors, sofa and armchair' },
-  { src: 'private-room-desk', span: 'wide', cat: 'Rooms', alt: 'Private room with work desk next to the bed' },
+  { src: 'sharing-room-rug', cat: 'Rooms', alt: 'Double-sharing room with two beds, a desk and a striped rug' },
+  { src: 'dining-hall-long', cat: 'Common Areas', alt: 'Long dining hall with wooden tables and benches' },
+  { src: 'private-room-desk', cat: 'Rooms', alt: 'Private room with work desk next to the bed' },
+  { src: 'balcony-railing', cat: 'Building', alt: 'Balcony with a glass railing and a view over the neighbourhood' },
+  { src: 'courtyard-parking', cat: 'Building', alt: 'Courtyard with benches beside the building' },
+  { src: 'sharing-room-corner', cat: 'Rooms', alt: 'Sharing room with two beds and full-height curtains' },
 ]
 
 export const RULES = [

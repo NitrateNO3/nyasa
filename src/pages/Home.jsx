@@ -41,7 +41,7 @@ export default function Home() {
               amenities and professional property management to make everyday living convenient.
             </p>
             <div data-reveal>
-              <MoreLink to="/about">More about Nayasa</MoreLink>
+              <MoreLink to="/about">About Nayasa</MoreLink>
             </div>
           </div>
         </div>
@@ -58,7 +58,7 @@ export default function Home() {
               </h2>
             </div>
             <div data-reveal>
-              <MoreLink to="/rooms">View all rooms &amp; pricing</MoreLink>
+              <MoreLink to="/rooms">Explore Rooms</MoreLink>
             </div>
           </div>
 
@@ -76,11 +76,11 @@ export default function Home() {
                 </div>
                 <div className="room-card__body">
                   <div>
-                    <h3 className="h3">{r.label}</h3>
+                    <h3 className="h3">{r.title}</h3>
                     <p>{r.lead}</p>
                   </div>
                   <p className="room-card__price">
-                    <small>from</small>₹{r.from}
+                    <small>Starting at</small>₹{r.from}
                     <small>{r.unit}</small>
                   </p>
                 </div>
@@ -102,7 +102,7 @@ export default function Home() {
             </div>
             <div data-reveal>
               <MoreLink to="/amenities" light>
-                Explore amenities
+                Amenities
               </MoreLink>
             </div>
           </div>
@@ -128,7 +128,7 @@ export default function Home() {
               </h2>
             </div>
             <div data-reveal>
-              <MoreLink to="/gallery">See the full gallery</MoreLink>
+              <MoreLink to="/gallery">Take a Look Around Nayasa</MoreLink>
             </div>
           </div>
         </div>
@@ -160,31 +160,24 @@ export default function Home() {
               <Icon name="pin" size={20} />
               ITPL Main Road, Whitefield, Bengaluru – 560066
             </p>
-            <MoreLink to="/location">See on the map</MoreLink>
+            <MoreLink to="/location">Location</MoreLink>
           </article>
 
           <article className="split-card" data-reveal style={{ '--d': '120ms' }}>
             <p className="eyebrow">Good to know</p>
-            <h2 className="h3">Before you move in</h2>
+            <h2 className="h3">Rental Information &amp; Guidelines</h2>
             <ul className="split-card__list">
-              <li>
-                <strong>30 days</strong> notice period
-              </li>
-              <li>
-                <strong>Food</strong> not included in rent
-              </li>
-              <li>
-                <strong>Deposit</strong> shared during enquiry
-              </li>
+              <li>A mandatory 30-day notice period applies.</li>
+              <li>Food is not included in the accommodation pricing.</li>
+              <li>A security deposit is applicable as per company policy.</li>
             </ul>
-            <MoreLink to="/good-to-know">Rental guidelines</MoreLink>
+            <MoreLink to="/good-to-know">Good to Know</MoreLink>
           </article>
 
           <article className="split-card split-card--accent" data-reveal style={{ '--d': '240ms' }}>
-            <p className="eyebrow">FAQ</p>
+            <p className="eyebrow">Frequently Asked Questions</p>
             <h2 className="h3">Have questions? We've got answers.</h2>
-            <p>From food and deposits to notice periods and scheduling a visit.</p>
-            <MoreLink to="/faq">Read the FAQ</MoreLink>
+            <MoreLink to="/faq">FAQ</MoreLink>
           </article>
         </div>
       </section>

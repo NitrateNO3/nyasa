@@ -12,14 +12,8 @@ export default function GoodToKnow() {
         crumb="Good to Know"
         eyebrow="Good to know"
         lines={['Rental information', <em>&amp; guidelines</em>]}
-        facts={[
-          ['Notice period', '30 days'],
-          ['Food', 'Not included'],
-          ['Deposit', 'Shared during enquiry'],
-        ]}
         image="courtyard-parking"
         imageAlt="Nayasa courtyard with benches beside the building"
-        tag="6 things to know"
       >
         <p>Here are a few important things to know before moving into Nayasa.</p>
       </PageHero>

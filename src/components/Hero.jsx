@@ -4,19 +4,19 @@ import { img } from '../data'
 import Icon from './Icon'
 
 const SLIDES = [
-  { src: 'rooftop-lounge', label: 'Recreational space', alt: 'Covered recreational space at Nayasa at dusk, with hanging swing chairs and warm pendant lights' },
-  { src: 'lobby-lounge', label: 'Lounge', alt: 'Lounge with a grey sofa, patterned armchair and the Nayasa logo wall' },
-  { src: 'sharing-room', label: 'Double-sharing room', alt: 'Double-sharing room with two beds, wardrobe, desk and woven rug' },
-  { src: 'private-room-window', label: 'Private room', alt: 'Private room with a window, curtains and a yellow desk chair' },
+  { src: 'rooftop-lounge', alt: 'Covered recreational space at Nayasa at dusk, with hanging swing chairs and warm pendant lights' },
+  { src: 'lobby-lounge', alt: 'Lounge with a grey sofa, patterned armchair and the Nayasa logo wall' },
+  { src: 'sharing-room', alt: 'Double-sharing room with two beds, wardrobe, desk and woven rug' },
+  { src: 'private-room-window', alt: 'Private room with a window, curtains and a yellow desk chair' },
 ]
 
 const MARQUEE = [
   'Private Rooms',
   'Double Sharing',
   'High-Speed Wi-Fi',
-  'Housekeeping',
+  'Housekeeping Services',
   '24/7 Support',
-  'Safe & Secure',
+  'Safe & Secure Living',
   'Community Living',
   'ITPL Main Road, Whitefield',
 ]
@@ -69,13 +69,13 @@ export default function Hero() {
               <dl>
                 <dt>Double Sharing</dt>
                 <dd>
-                  ₹10,000<small>/bed</small>
+                  ₹10,000<small> per bed</small>
                 </dd>
               </dl>
               <dl>
                 <dt>Private Room</dt>
                 <dd>
-                  ₹14,000<small>/room</small>
+                  ₹14,000<small> per room</small>
                 </dd>
               </dl>
             </div>
@@ -102,7 +102,7 @@ export default function Hero() {
                     key={s.src}
                     role="tab"
                     aria-selected={i === active}
-                    aria-label={s.label}
+                    aria-label={`Photo ${i + 1} of ${SLIDES.length}`}
                     className={i === active ? 'is-active' : ''}
                     onClick={() => setActive(i)}
                     style={{ '--ms': `${SLIDE_MS}ms` }}
@@ -111,9 +111,6 @@ export default function Hero() {
                   </button>
                 ))}
               </div>
-              <p className="hero__slide-label" key={active}>
-                {SLIDES[active].label}
-              </p>
             </div>
 
             <div className="hero__stamp" aria-hidden="true">
@@ -137,7 +134,7 @@ export default function Hero() {
                 <Icon name="clock" size={18} />
               </span>
               <span>
-                <strong>24/7</strong> support
+                <strong>24/7</strong> Support
               </span>
             </div>
           </div>

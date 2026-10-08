@@ -8,7 +8,7 @@ import { PRICING, ROOM_TYPES, img } from '../data'
 const FILTERS = ['All', 'Private Room', 'Double Sharing']
 
 export default function Rooms() {
-  usePageTitle('Private & Double-Sharing Rooms in Whitefield')
+  usePageTitle('Our Rooms')
   const navigate = useNavigate()
   const [filter, setFilter] = useState('All')
   const rows = filter === 'All' ? PRICING : PRICING.filter((r) => r.type === filter)
@@ -17,17 +17,15 @@ export default function Rooms() {
     <>
       <PageHero
         index={2}
-        crumb="Rooms"
+        crumb="Our Rooms"
         eyebrow="Find your space"
         lines={['Rooms designed', <>around <em>your lifestyle</em></>]}
         facts={[
-          ['Private rooms', 'from ₹14,000 per room'],
-          ['Double sharing', 'from ₹10,000 per bed'],
-          ['Notice period', '30 days'],
+          ['Private Rooms', 'Starting at ₹14,000 per room'],
+          ['Double-Sharing Rooms', 'Starting at ₹10,000 per bed'],
         ]}
         image="sharing-room-corner"
         imageAlt="Double-sharing room with two beds, bedside tables and full-height curtains"
-        tag="2 ways to live"
       >
         <p>
           Everyone has a different idea of comfort. Some prefer the privacy of their own room, while
@@ -45,7 +43,7 @@ export default function Rooms() {
               </div>
               <div className="room__info" data-reveal>
                 <span className="room__idx">0{idx + 1}</span>
-                <h2 className="h3">{room.label}</h2>
+                <h2 className="h3">{room.title}</h2>
                 <p className="room__price">
                   <span>Starting at</span>
                   <strong>₹{room.from}</strong>
@@ -65,7 +63,7 @@ export default function Rooms() {
 
           <div className="tariff" id="pricing" data-reveal>
             <div className="tariff__head">
-              <h2 className="h3">Room pricing</h2>
+              <h2 className="h3">Room Pricing</h2>
               <div className="chips" role="group" aria-label="Filter pricing">
                 {FILTERS.map((f) => (
                   <button key={f} className={`chip ${filter === f ? 'is-active' : ''}`} onClick={() => setFilter(f)}>
@@ -105,10 +103,7 @@ export default function Rooms() {
         </div>
       </section>
 
-      <CtaBand
-        title={<>Found the <em>right room?</em></>}
-        text="Book a visit to see the rooms in person, or call the team to check current availability."
-      />
+      <CtaBand />
     </>
   )
 }
