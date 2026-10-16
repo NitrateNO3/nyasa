@@ -19,9 +19,21 @@ function RouteEffects() {
   const { pathname, hash } = useLocation()
 
   useEffect(() => {
-    const target = hash && document.getElementById(hash.slice(1))
-    if (target) target.scrollIntoView({ behavior: 'instant' })
-    else window.scrollTo({ top: 0, behavior: 'instant' })
+    if (hash) {
+      const targetId = hash.slice(1)
+      const scrollTarget = () => {
+        const el = document.getElementById(targetId)
+        if (el) el.scrollIntoView({ behavior: 'smooth' })
+      }
+      scrollTarget()
+      const t = setTimeout(scrollTarget, 80)
+      return () => clearTimeout(t)
+    } else {
+      window.scrollTo({ top: 0, behavior: 'instant' })
+    }
+  }, [pathname, hash])
+
+  useEffect(() => {
     const io = new IntersectionObserver(
       (entries) =>
         entries.forEach((e) => {

@@ -86,7 +86,7 @@ export default function About() {
                   <textPath href="#circ">ITPL MAIN ROAD · WHITEFIELD · 560066 ·</textPath>
                 </text>
               </svg>
-              <span>N</span>
+              <img src="/images/nayasa-emblem.webp" alt="" className="about__stamp-emblem" width="40" height="30" />
             </div>
           </div>
         </div>

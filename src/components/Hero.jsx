@@ -1,160 +1,192 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { img } from '../data'
 import Icon from './Icon'
 
-const SLIDES = [
-  { src: 'rooftop-lounge', alt: 'Covered recreational space at Nayasa at dusk, with hanging swing chairs and warm pendant lights' },
-  { src: 'lobby-lounge', alt: 'Lounge with a grey sofa, patterned armchair and the Nayasa logo wall' },
-  { src: 'sharing-room', alt: 'Double-sharing room with two beds, wardrobe, desk and woven rug' },
-  { src: 'private-room-window', alt: 'Private room with a window, curtains and a yellow desk chair' },
+const HERO_VIEWS = [
+  {
+    id: 'rooftop',
+    label: 'Rooftop Lounge',
+    shortLabel: 'Rooftop',
+    tag: 'Twilight Terrace',
+    src: 'rooftop-lounge',
+    alt: 'Covered rooftop recreational lounge at Nayasa with swing chairs and evening lighting',
+  },
+  {
+    id: 'private',
+    label: 'Private Room',
+    shortLabel: 'Private',
+    tag: 'Single Suite',
+    src: 'private-room-bright',
+    alt: 'Bright private room at Nayasa with single bed, work desk and window light',
+  },
+  {
+    id: 'lounge',
+    label: 'Resident Lounge',
+    shortLabel: 'Lounge',
+    tag: 'Ground Floor',
+    src: 'lobby-lounge',
+    alt: 'Common lounge at Nayasa with sofa, armchair and reception area',
+  },
+  {
+    id: 'exterior',
+    label: 'Building Exterior',
+    shortLabel: 'Exterior',
+    tag: 'ITPL Main Road',
+    src: 'building-exterior',
+    alt: 'Contemporary Nayasa building facade on ITPL Main Road, Whitefield',
+  },
 ]
 
-const MARQUEE = [
-  'Private Rooms',
-  'Double Sharing',
-  'High-Speed Wi-Fi',
-  'Housekeeping Services',
-  '24/7 Support',
-  'Safe & Secure Living',
-  'Community Living',
-  'ITPL Main Road, Whitefield',
-]
-
-const SLIDE_MS = 5500
+const SLIDE_INTERVAL = 6000
 
 export default function Hero() {
   const [active, setActive] = useState(0)
+  const [isPaused, setIsPaused] = useState(false)
 
   useEffect(() => {
-    const t = setInterval(() => setActive((i) => (i + 1) % SLIDES.length), SLIDE_MS)
-    return () => clearInterval(t)
-  }, [active])
+    if (isPaused) return
+    const timer = setInterval(() => {
+      setActive((prev) => (prev + 1) % HERO_VIEWS.length)
+    }, SLIDE_INTERVAL)
+    return () => clearInterval(timer)
+  }, [isPaused, active])
+
+  const scrollTo = (id) => (e) => {
+    e.preventDefault()
+    const target = document.getElementById(id)
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth' })
+      window.history.pushState(null, '', `#${id}`)
+    }
+  }
 
   return (
-    <>
-      <section className="hero">
-        <div className="wrap hero__grid">
-          <div className="hero__text">
-            <h1 className="eyebrow hero__eyebrow">Premium Co-Living in Whitefield, Bangalore</h1>
+    <section className="hero" aria-label="Welcome to Nayasa Premium Co-Living">
+      <div className="wrap hero__grid">
+        {/* Left Column: Editorial Content */}
+        <div className="hero__content">
+          <p className="hero__meta" data-reveal style={{ '--d': '60ms' }}>
+            Whitefield, Bengaluru · ITPL Main Road
+          </p>
 
-            <p className="hero__title" aria-label="Live Comfort. Live Nayasa.">
-              <span className="line" aria-hidden="true">
-                <span style={{ '--i': 0 }}>Live Comfort.</span>
-              </span>
-              <span className="line" aria-hidden="true">
-                <span style={{ '--i': 1 }}>
-                  <em>Live Nayasa.</em>
-                </span>
-              </span>
-            </p>
+          <h1 className="hero__headline" data-reveal style={{ '--d': '120ms' }}>
+            Live Comfort.
+            <br />
+            Live Nayasa.
+          </h1>
 
-            <p className="hero__copy hero__fade" style={{ '--i': 0 }}>
-              Discover a comfortable, thoughtfully managed co-living experience in Whitefield,
-              Bengaluru. Whether you're looking for your own private space or prefer sharing, Nayasa
-              offers flexible living options designed to make everyday life easier.
-            </p>
+          <p className="hero__lead" data-reveal style={{ '--d': '180ms' }}>
+            Thoughtfully managed private and double-sharing accommodation designed for working
+            professionals on ITPL Main Road. All-inclusive living with high-speed Wi-Fi, daily
+            housekeeping, and 24/7 power backup.
+          </p>
 
-            <div className="hero__ctas hero__fade" style={{ '--i': 1 }}>
-              <Link to="/rooms" className="btn btn--dark">
-                Explore Rooms <Icon name="arrow" size={18} />
-              </Link>
-              <Link to="/contact" className="btn btn--outline">
-                Book a Visit
-              </Link>
-            </div>
-
-            <div className="hero__rates hero__fade" style={{ '--i': 2 }}>
-              <p className="hero__rates-cap">Starting from</p>
-              <dl>
-                <dt>Double Sharing</dt>
-                <dd>
-                  ₹10,000<small> per bed</small>
-                </dd>
-              </dl>
-              <dl>
-                <dt>Private Room</dt>
-                <dd>
-                  ₹14,000<small> per room</small>
-                </dd>
-              </dl>
-            </div>
+          <div className="hero__rate-line" data-reveal style={{ '--d': '220ms' }}>
+            <span>From <strong>₹10,000/bed</strong> in Double Sharing</span>
+            <span className="hero__rate-sep">/</span>
+            <span>From <strong>₹14,000/room</strong> in Private</span>
           </div>
 
-          <div className="hero__art">
-            <div className="hero__arch">
-              {SLIDES.map((s, i) => (
-                <img
-                  key={s.src}
-                  src={img(s.src)}
-                  srcSet={`${img(s.src, 'sm')} 800w, ${img(s.src)} 1800w`}
-                  sizes="(max-width: 900px) 90vw, 45vw"
-                  alt={s.alt}
-                  className={i === active ? 'is-active' : ''}
-                  fetchPriority={i === 0 ? 'high' : 'low'}
-                  aria-hidden={i !== active}
-                />
-              ))}
+          <div className="hero__actions" data-reveal style={{ '--d': '260ms' }}>
+            <a href="#rooms" onClick={scrollTo('rooms')} className="btn btn--dark">
+              Explore Rooms <Icon name="arrow" size={16} />
+            </a>
+            <a href="#visit" onClick={scrollTo('visit')} className="btn btn--accent">
+              Book a Visit
+            </a>
+          </div>
 
-              <div className="hero__slides" role="tablist" aria-label="Property photos">
-                {SLIDES.map((s, i) => (
+          <p className="hero__subtext" data-reveal style={{ '--d': '300ms' }}>
+            A LIFE BY SQFT Brand · Professional On-Site Management
+          </p>
+        </div>
+
+        {/* Right Column: Architectural Visual (Side Photo Slideshow) */}
+        <div
+          className="hero__visual"
+          data-reveal
+          style={{ '--d': '160ms' }}
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+        >
+          <div className="hero__frame">
+            {/* Top Bar: Verification Badge & Slide Navigation */}
+            <div className="hero__frame-top">
+              <div className="hero__status-pill">
+                <span className="hero__status-dot" aria-hidden="true" />
+                <span>Actual Property · ITPL Main Rd</span>
+              </div>
+
+              <div className="hero__nav">
+                <span className="hero__counter">
+                  0{active + 1}<i>/</i>0{HERO_VIEWS.length}
+                </span>
+                <div className="hero__nav-arrows">
                   <button
-                    key={s.src}
+                    type="button"
+                    className="hero__arrow"
+                    onClick={() => setActive((prev) => (prev - 1 + HERO_VIEWS.length) % HERO_VIEWS.length)}
+                    aria-label="Previous property photo"
+                  >
+                    <Icon name="left" size={13} stroke={2} />
+                  </button>
+                  <button
+                    type="button"
+                    className="hero__arrow"
+                    onClick={() => setActive((prev) => (prev + 1) % HERO_VIEWS.length)}
+                    aria-label="Next property photo"
+                  >
+                    <Icon name="right" size={13} stroke={2} />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Photos */}
+            {HERO_VIEWS.map((view, i) => (
+              <figure
+                key={view.id}
+                className={`hero__photo ${i === active ? 'is-active' : ''}`}
+                aria-hidden={i !== active}
+              >
+                <img
+                  src={img(view.src)}
+                  srcSet={`${img(view.src, 'sm')} 800w, ${img(view.src)} 1800w`}
+                  sizes="(max-width: 900px) 95vw, 50vw"
+                  alt={view.alt}
+                  fetchPriority={i === 0 ? 'high' : 'low'}
+                  loading={i === 0 ? 'eager' : 'lazy'}
+                />
+              </figure>
+            ))}
+
+            {/* Bottom Bar: Caption and Segment Switcher */}
+            <div className="hero__frame-bottom">
+              <div className="hero__caption">
+                <span className="hero__caption-tag">{HERO_VIEWS[active].tag}</span>
+                <h2 className="hero__caption-title">{HERO_VIEWS[active].label}</h2>
+              </div>
+
+              {/* Clean Segment Switcher */}
+              <div className="hero__switcher" role="tablist" aria-label="Property photo selection">
+                {HERO_VIEWS.map((view, i) => (
+                  <button
+                    key={view.id}
                     role="tab"
                     aria-selected={i === active}
-                    aria-label={`Photo ${i + 1} of ${SLIDES.length}`}
-                    className={i === active ? 'is-active' : ''}
+                    aria-label={`View ${view.label}`}
+                    className={`hero__switcher-tab ${i === active ? 'is-active' : ''}`}
                     onClick={() => setActive(i)}
-                    style={{ '--ms': `${SLIDE_MS}ms` }}
                   >
-                    <span />
+                    <span className="hero__switcher-name hero__switcher-name--full">{view.label}</span>
+                    <span className="hero__switcher-name hero__switcher-name--short">{view.shortLabel || view.label.split(' ')[0]}</span>
                   </button>
                 ))}
               </div>
             </div>
-
-            <div className="hero__stamp" aria-hidden="true">
-              <svg className="hero__stamp-ring" viewBox="0 0 120 120">
-                <defs>
-                  <path id="hero-circ" d="M60 60m-45 0a45 45 0 1 1 90 0a45 45 0 1 1-90 0" />
-                </defs>
-                <text>
-                  <textPath href="#hero-circ">WHITEFIELD · BENGALURU · NAYASA ·</textPath>
-                </text>
-              </svg>
-              <Icon name="arrowDown" size={26} stroke={1.4} />
-            </div>
-
-            <figure className="hero__thumb" aria-hidden="true">
-              <img src={img('private-room-desk', 'sm')} alt="" />
-            </figure>
-
-            <div className="hero__chip" aria-hidden="true">
-              <span className="hero__chip-icon">
-                <Icon name="clock" size={18} />
-              </span>
-              <span>
-                <strong>24/7</strong> Support
-              </span>
-            </div>
           </div>
         </div>
-      </section>
-
-      <div className="marquee" aria-hidden="true">
-        <div className="marquee__track">
-          {[0, 1].map((k) => (
-            <div className="marquee__group" key={k}>
-              {MARQUEE.map((m) => (
-                <span key={m}>
-                  {m}
-                  <i>✦</i>
-                </span>
-              ))}
-            </div>
-          ))}
-        </div>
       </div>
-    </>
+    </section>
   )
 }
