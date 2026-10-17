@@ -7,9 +7,9 @@ const ON_PAGE_LINKS = [
   ['#rooms', 'Accommodation & Rates'],
   ['#amenities', 'Amenities'],
   ['#gallery', 'Property Gallery'],
-  ['#location', 'Location & Commutes'],
-  ['#faq', 'FAQs & Guidelines'],
-  ['#visit', 'Schedule a Visit'],
+  ['#location', 'Location'],
+  ['#faq', 'FAQs'],
+  ['#book-a-visit', 'Schedule a Visit'],
 ]
 
 const SUBPAGE_LINKS = [

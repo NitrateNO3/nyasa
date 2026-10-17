@@ -1,102 +1,905 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Hero from '../components/Hero'
 import Icon from '../components/Icon'
 import { usePageTitle } from '../components/PageHero'
 import { TiltedGridHero } from '@/components/ui/tilted-grid-hero'
-import {
-  AMENITIES,
-  CONTACT,
-  ENQUIRY_ENDPOINT,
-  FAQS,
-  GALLERY,
-  img,
-} from '../data'
+import { AMENITIES, CONTACT, ENQUIRY_ENDPOINT, FAQS, GALLERY, PRICING, ROOM_TYPES, RULES, img } from '../data'
+import '../home.css'
+
+const still = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+// Calls `fn(rect, viewportHeight)` on every animation frame in which the page scrolled.
+function useScrollFrame(ref, fn, deps = []) {
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    let raf = 0
+    const tick = () => {
+      raf = 0
+      fn(el.getBoundingClientRect(), window.innerHeight, el)
+    }
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(tick)
+    }
+    tick()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps)
+}
+
+const clamp01 = (n) => Math.min(1, Math.max(0, n))
+const rupees = (n) => `₹${n.toLocaleString('en-IN')}`
+const priceOf = (row) => Number(row.price.replace(/,/g, ''))
+
+/* ───────────── Marquee ───────────── */
+
+const TICKER = [
+  'High-Speed Wi-Fi',
+  'Housekeeping Services',
+  'Safe & Secure Living',
+  '24/7 Support',
+  'Community Living',
+  'Private Rooms',
+  'Double Sharing',
+  'ITPL Main Road',
+]
+
+function Ticker() {
+  const items = TICKER.map((t) => (
+    <span key={t} className="nx-ticker__item">
+      {t}
+      <img src="/images/nayasa-emblem.webp" alt="" width="22" height="16" />
+    </span>
+  ))
+  return (
+    <div className="nx-ticker" aria-label={TICKER.join(', ')}>
+      <div className="nx-ticker__track" aria-hidden="true">
+        <div>{items}</div>
+        <div>{items}</div>
+      </div>
+    </div>
+  )
+}
+
+/* ───────────── About: three pillars in arches ───────────── */
+
+const PILLARS = [
+  {
+    src: 'private-room-desk',
+    title: 'Your space, your choice',
+    text: 'Private and shared accommodation options, giving residents the freedom to choose a space that suits their needs and budget.',
+    speed: 30,
+  },
+  {
+    src: 'lobby-lounge',
+    title: 'The essentials, taken care of',
+    text: 'From housekeeping to high-speed Wi-Fi and round-the-clock support, so you can focus on living your life.',
+    speed: -24,
+  },
+  {
+    src: 'building-exterior',
+    title: 'Professionally managed',
+    text: 'A LIFE BY SQFT brand, bringing professional property management to everyday living on ITPL Main Road.',
+    speed: 44,
+  },
+]
+
+function About() {
+  const box = useRef(null)
+  useScrollFrame(box, (r, vh, el) => {
+    if (still() || window.innerWidth < 900) return el.style.setProperty('--p', '0.5')
+    el.style.setProperty('--p', clamp01((vh - r.top) / (vh + r.height)).toFixed(4))
+  })
+
+  return (
+    <section id="about" className="nx-about" aria-label="About Nayasa" ref={box}>
+      <div className="nx-wrap nx-about__grid">
+        <div className="nx-about__text">
+          <p className="nx-eyebrow" data-reveal>About Nayasa</p>
+          <h2 className="nx-h2 nx-about__title" data-reveal style={{ '--d': '80ms' }}>
+            A place you'll love <em>coming home</em> to.
+          </h2>
+          <p className="nx-about__lede" data-reveal style={{ '--d': '140ms' }}>
+            Finding a place to stay in a busy city shouldn't be complicated. At Nayasa Premium
+            Co-Living, we bring together comfortable accommodation, essential amenities and
+            professional property management to make everyday living convenient.
+          </p>
+          <div className="nx-about__stats" data-reveal style={{ '--d': '200ms' }}>
+            <div>
+              <strong><Counter to={10000} prefix="₹" /></strong>
+              <span>Double sharing, per bed</span>
+            </div>
+            <div>
+              <strong><Counter to={14000} prefix="₹" /></strong>
+              <span>Private room, per room</span>
+            </div>
+            <div>
+              <strong>24/7</strong>
+              <span>Round-the-clock support</span>
+            </div>
+            <div>
+              <strong className="nx-about__brand">LIFE BY SQFT</strong>
+              <span>Professionally managed</span>
+            </div>
+          </div>
+          <Link to="/about" className="nx-link" data-reveal style={{ '--d': '260ms' }}>
+            More about Nayasa <Icon name="arrow" size={15} />
+          </Link>
+        </div>
+
+        <div className="nx-pillars">
+          {PILLARS.map((p, i) => (
+            <article key={p.title} className="nx-pillar" style={{ '--speed': p.speed }} data-reveal>
+              <div className="nx-pillar__img">
+                <img src={img(p.src, 'sm')} alt="" loading="lazy" />
+                <span className="nx-pillar__n">0{i + 1}</span>
+              </div>
+              <h3>{p.title}</h3>
+              <p>{p.text}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function Counter({ to, prefix = '', suffix = '' }) {
+  const ref = useRef(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    if (still()) {
+      el.textContent = prefix + to.toLocaleString('en-IN') + suffix
+      return
+    }
+    let raf = 0
+    const io = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return
+      io.disconnect()
+      const start = performance.now()
+      const step = (now) => {
+        const t = Math.min(1, (now - start) / 1600)
+        const eased = 1 - Math.pow(1 - t, 4)
+        el.textContent = prefix + Math.round(to * eased).toLocaleString('en-IN') + suffix
+        if (t < 1) raf = requestAnimationFrame(step)
+      }
+      raf = requestAnimationFrame(step)
+    })
+    io.observe(el)
+    return () => {
+      io.disconnect()
+      cancelAnimationFrame(raf)
+    }
+  }, [to, prefix, suffix])
+  return (
+    <span ref={ref}>
+      {prefix}0{suffix}
+    </span>
+  )
+}
+
+/* ───────────── A walk through Nayasa: a gallery wall you scroll along ───────────── */
+
+const WALK = [
+  { src: 'private-room-bright', short: 'Private room', title: 'A room of', em: 'your own', text: 'Private rooms for those who prefer their personal space.', tag: 'From ₹14,000 / room', shape: 'arch' },
+  { src: 'sharing-room-wide', short: 'Double sharing', title: 'Room', em: 'for two', text: 'Double sharing at an accessible price, with essential facilities.', tag: 'From ₹10,000 / bed', shape: 'wide' },
+  { src: 'lobby-lounge', short: 'Lounge', title: 'The', em: 'lounge', text: 'A welcoming common lounge, right as you walk in.', tag: 'Common areas', shape: 'tall' },
+  { src: 'kitchen-counter', short: 'Kitchen', title: 'The', em: 'kitchen', text: 'A shared kitchen with a refrigerator and water dispenser.', tag: 'Common areas', shape: 'wide' },
+  { src: 'dining-hall', short: 'Dining', title: 'The', em: 'dining hall', text: 'Long wooden tables and benches to sit down together.', tag: 'Common areas', shape: 'arch' },
+  { src: 'recreation-room', short: 'Recreation', title: 'Game', em: 'time', text: 'Table tennis and foosball in the recreational space.', tag: 'Facilities', shape: 'tall' },
+  { src: 'rooftop-evening', short: 'Rooftop', title: 'Evenings,', em: 'upstairs', text: 'Swing chairs, warm lights and green turf under a covered roof.', tag: 'Facilities', shape: 'wide' },
+]
+
+// Sideways pixels per pixel scrolled while the walk is pinned.
+const WALK_SPEED = 2.5
+
+function Walk({ onBook }) {
+  const outer = useRef(null)
+  const track = useRef(null)
+  const bar = useRef(null)
+  const words = useRef(null)
+  const cards = useRef([])
+  const dist = useRef(0)
+  const [step, setStep] = useState(0)
+  const [pinned, setPinned] = useState(false)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 900px)')
+    const update = () => setPinned(mq.matches && !still())
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
+
+  // Spotlight: the photo nearest the middle of the screen gets --f = 1, its neighbours fade
+  // toward 0. `x` is how far the track has travelled to the left.
+  const spotlight = (x) => {
+    const mid = window.innerWidth / 2
+    let best = 0
+    let bestD = Infinity
+    cards.current.forEach((c, i) => {
+      if (!c) return
+      const d = Math.abs(c.offsetLeft + c.offsetWidth / 2 - x - mid) / window.innerWidth
+      c.style.setProperty('--f', Math.max(0, 1 - d * 1.45).toFixed(3))
+      if (d < bestD) {
+        bestD = d
+        best = i
+      }
+    })
+    setStep(best)
+  }
+
+  // The pinned stage is one screen plus the track's overflow divided by SPEED, so the
+  // photos travel sideways SPEED× faster than the page scrolls and the walk stays short.
+  useEffect(() => {
+    const o = outer.current
+    const t = track.current
+    if (!o || !t) return
+    if (!pinned) {
+      o.style.height = ''
+      t.style.transform = ''
+      const onSwipe = () => spotlight(t.scrollLeft)
+      onSwipe()
+      t.addEventListener('scroll', onSwipe, { passive: true })
+      return () => t.removeEventListener('scroll', onSwipe)
+    }
+    const size = () => {
+      dist.current = Math.max(0, t.scrollWidth - window.innerWidth)
+      o.style.height = `${dist.current / WALK_SPEED + window.innerHeight}px`
+    }
+    size()
+    const ro = new ResizeObserver(size)
+    ro.observe(t)
+    return () => ro.disconnect()
+  }, [pinned])
+
+  useScrollFrame(
+    outer,
+    (r, vh) => {
+      if (!pinned) return
+      const p = clamp01(-r.top / Math.max(1, r.height - vh))
+      const x = p * dist.current
+      track.current.style.transform = `translate3d(${(-x).toFixed(1)}px,0,0)`
+      if (words.current) words.current.style.transform = `translate3d(${(-x * 0.32).toFixed(1)}px,-50%,0)`
+      if (bar.current) bar.current.style.transform = `scaleX(${p})`
+      spotlight(x)
+    },
+    [pinned],
+  )
+
+  const jumpTo = (i) => {
+    const c = cards.current[i]
+    if (!c) return
+    const x = c.offsetLeft + c.offsetWidth / 2 - window.innerWidth / 2
+    if (!pinned) {
+      track.current.scrollTo({ left: x, behavior: 'smooth' })
+      return
+    }
+    const o = outer.current
+    const p = clamp01(x / Math.max(1, dist.current))
+    const top = o.getBoundingClientRect().top + window.scrollY
+    window.scrollTo({ top: top + p * (o.offsetHeight - window.innerHeight), behavior: 'smooth' })
+  }
+
+  return (
+    <section id="spaces" className={`nx-walk ${pinned ? 'is-pinned' : ''}`} ref={outer} aria-label="Take a look around Nayasa">
+      <div className="nx-walk__stage">
+        <div className="nx-walk__words" ref={words} aria-hidden="true">
+          Rooms · Lounge · Kitchen · Dining · Play · Rooftop ·
+        </div>
+
+        <div className="nx-walk__track" ref={track}>
+          <div className="nx-walk__intro">
+            <p className="nx-eyebrow nx-eyebrow--light">Take a look around</p>
+            <h2 className="nx-h2 nx-h2--light nx-walk__title">
+              Step inside <em>Nayasa.</em>
+            </h2>
+            <p className="nx-walk__hint">
+              Seven spaces, photographed as they are at the property on ITPL Main Road.
+            </p>
+            <span className="nx-walk__arrow" aria-hidden="true">
+              <Icon name="arrow" size={18} />
+            </span>
+          </div>
+
+          {WALK.map((w, i) => (
+            <figure
+              key={w.src}
+              ref={(el) => (cards.current[i] = el)}
+              className={`nx-walk__card nx-walk__card--${w.shape}`}
+            >
+              <div className="nx-walk__img">
+                <img src={img(w.src)} srcSet={`${img(w.src, 'sm')} 800w, ${img(w.src)} 1800w`} sizes="(min-width: 900px) 50vw, 80vw" alt={`${w.title} ${w.em}`} loading="lazy" />
+              </div>
+              <figcaption>
+                <span className="nx-walk__num">0{i + 1}</span>
+                <div>
+                  <span className="nx-walk__tag">{w.tag}</span>
+                  <h3>
+                    {w.title} <em>{w.em}</em>
+                  </h3>
+                  <p>{w.text}</p>
+                </div>
+              </figcaption>
+            </figure>
+          ))}
+
+          <div className="nx-walk__end">
+            <div className="nx-walk__end-arch" aria-hidden="true">
+              <img src="/images/nayasa-emblem.webp" alt="" />
+            </div>
+            <p className="nx-eyebrow nx-eyebrow--light">Like what you see?</p>
+            <h3 className="nx-h2 nx-h2--light nx-walk__title">
+              Better in <em>person.</em>
+            </h3>
+            <button type="button" className="btn btn--accent" onClick={() => onBook()}>
+              Book a Visit <Icon name="arrow" size={17} />
+            </button>
+          </div>
+        </div>
+
+        <div className="nx-wrap nx-walk__index">
+          <span className="nx-walk__count" aria-hidden="true">
+            0{step + 1} <i>/ 0{WALK.length}</i>
+          </span>
+          <nav className="nx-walk__names" aria-label="Jump to a space">
+            {WALK.map((w, i) => (
+              <button key={w.src} type="button" className={i === step ? 'is-active' : ''} aria-current={i === step || undefined} onClick={() => jumpTo(i)}>
+                {w.short}
+              </button>
+            ))}
+          </nav>
+        </div>
+        {pinned && (
+          <span className="nx-walk__rail" aria-hidden="true">
+            <span ref={bar} />
+          </span>
+        )}
+      </div>
+    </section>
+  )
+}
+
+/* ───────────── Rooms ───────────── */
+
+const ROOM_PHOTOS = {
+  private: ['private-room-bright', 'private-room-study'],
+  sharing: ['sharing-room-wide', 'sharing-room-twin'],
+}
+
+const ROOM_TAGS = { private: 'Single occupancy', sharing: 'Two residents' }
+
+const INCLUDED = AMENITIES.filter((a) => a.title !== 'Community Living')
+
+function Rooms({ onBook }) {
+  return (
+    <section id="rooms" className="nx-rooms" aria-label="Our rooms">
+      <div className="nx-wrap nx-rooms__inner">
+        <div className="nx-rooms__head">
+          <div>
+            <p className="nx-eyebrow" data-reveal>Our Rooms</p>
+            <h2 className="nx-h2 nx-rooms__title" data-reveal style={{ '--d': '80ms' }}>
+              Rooms designed around <em>your lifestyle.</em>
+            </h2>
+          </div>
+          <p className="nx-rooms__aside" data-reveal style={{ '--d': '140ms' }}>
+            Some prefer the privacy of their own room, while others enjoy sharing a space. At Nayasa,
+            you can choose what works for you.
+          </p>
+        </div>
+
+        <div className="nx-rooms__panels">
+          {ROOM_TYPES.map((room, i) => (
+            <article key={room.key} className="nx-rp" data-reveal style={{ '--d': `${120 + i * 100}ms` }}>
+              {ROOM_PHOTOS[room.key].map((src, j) => (
+                <img key={src} className={j ? 'nx-rp__alt' : ''} src={img(src)} srcSet={`${img(src, 'sm')} 800w, ${img(src)} 1800w`} sizes="(min-width: 900px) 60vw, 100vw" alt={room.images[j]?.alt || room.title} loading="lazy" />
+              ))}
+
+              <div className="nx-rp__top">
+                <span className="nx-rp__tag">
+                  <i>0{i + 1}</i> {ROOM_TAGS[room.key]}
+                </span>
+                <span className="nx-rp__price">
+                  <small>Starting at</small>
+                  <strong>₹{room.from}</strong>
+                  <small>{room.unit}</small>
+                </span>
+              </div>
+
+              <div className="nx-rp__body">
+                <h3>{room.title}</h3>
+                <p className="nx-rp__lead">{room.lead}</p>
+                <div className="nx-rp__more">
+                  <div>
+                    <p>{room.body}</p>
+                    <div className="nx-rp__actions">
+                      <button type="button" className="btn btn--accent" onClick={() => onBook(room.formValue)}>
+                        {room.cta} <Icon name="arrow" size={16} />
+                      </button>
+                      <Link to={`/rooms#${room.key}`} className="nx-link nx-link--light">
+                        Room details
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <div className="nx-rooms__included">
+          <span className="nx-rooms__included-title">Included in every room</span>
+          <ul>
+            {INCLUDED.map((a) => (
+              <li key={a.title}>
+                <Icon name={a.icon} size={18} /> {a.title}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ───────────── Pricing: a rate card with a budget slider ───────────── */
+
+const TIERS = [...PRICING].sort((a, b) => priceOf(a) - priceOf(b))
+const MIN = priceOf(TIERS[0])
+const MAX = priceOf(TIERS[TIERS.length - 1])
+const TARIFF = [
+  { type: 'Double Sharing', unit: 'per bed', rows: TIERS.filter((t) => t.type === 'Double Sharing') },
+  { type: 'Private Room', unit: 'per room', rows: TIERS.filter((t) => t.type === 'Private Room') },
+]
+
+function Pricing({ onBook }) {
+  const [budget, setBudget] = useState(15000)
+  const fits = TIERS.filter((t) => priceOf(t) <= budget).length
+
+  return (
+    <section id="pricing" className="nx-pricing" aria-label="Room pricing">
+      <div className="nx-wrap nx-pricing__grid">
+        <div className="nx-pricing__intro">
+          <p className="nx-eyebrow" data-reveal>Room Pricing</p>
+          <h2 className="nx-h2 nx-pricing__title" data-reveal style={{ '--d': '80ms' }}>
+            Simple, <em>transparent</em> pricing.
+          </h2>
+          <p className="nx-pricing__lede" data-reveal style={{ '--d': '140ms' }}>
+            Double sharing starts at ₹10,000 per bed and private rooms at ₹14,000 per room. Slide to
+            see what fits your budget.
+          </p>
+
+          <div className="nx-budget" data-reveal style={{ '--d': '200ms' }}>
+            <div className="nx-budget__row">
+              <label htmlFor="nx-budget">My monthly budget</label>
+              <output htmlFor="nx-budget">{rupees(budget)}</output>
+            </div>
+            <input
+              id="nx-budget"
+              type="range"
+              min={MIN}
+              max={MAX}
+              step={500}
+              value={budget}
+              onChange={(e) => setBudget(Number(e.target.value))}
+              style={{ '--v': `${((budget - MIN) / (MAX - MIN)) * 100}%` }}
+              aria-valuetext={rupees(budget)}
+            />
+            <div className="nx-budget__ends" aria-hidden="true">
+              <span>{rupees(MIN)}</span>
+              <span>{rupees(MAX)}</span>
+            </div>
+            <p className="nx-budget__result" aria-live="polite">
+              <strong>{fits}</strong> of {TIERS.length} room options fit your budget
+            </p>
+          </div>
+
+          <ul className="nx-pricing__terms" data-reveal style={{ '--d': '260ms' }}>
+            <li>Rent payable in advance</li>
+            <li>Security deposit as per policy</li>
+            <li>30-day notice period</li>
+            <li>Food not included</li>
+          </ul>
+        </div>
+
+        <div className="nx-tariff" data-reveal="img" style={{ '--d': '120ms' }}>
+          <div className="nx-tariff__head">
+            <img src="/images/nayasa-emblem.webp" alt="" width="34" height="26" />
+            <span>
+              <strong>Nayasa Tariff</strong>
+              <small>Monthly rent · ITPL Main Road</small>
+            </span>
+          </div>
+
+          {TARIFF.map((group) => (
+            <div className="nx-tariff__group" key={group.type}>
+              <p className="nx-tariff__type">
+                {group.type} <span>{group.unit}</span>
+              </p>
+              <ul>
+                {group.rows.map((t) => {
+                  const fit = priceOf(t) <= budget
+                  return (
+                    <li key={t.series} className={fit ? 'is-fit' : ''}>
+                      <button type="button" onClick={() => onBook(t.type)} aria-label={`Enquire about ${t.type}, series ${t.series}, ₹${t.price} ${group.unit}`}>
+                        <span className="nx-tariff__series">Series {t.series}</span>
+                        <span className="nx-tariff__dots" aria-hidden="true" />
+                        <span className="nx-tariff__price">₹{t.price}</span>
+                        <span className="nx-tariff__go" aria-hidden="true">
+                          <Icon name="arrow" size={14} />
+                        </span>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          ))}
+
+          <p className="nx-tariff__foot">
+            Tap a room to enquire · <Link to="/rooms#pricing">Full price list</Link>
+          </p>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ───────────── Amenities bento ───────────── */
+
+const BENTO = {
+  'Community Living': { area: 'comm', src: 'rooftop-lounge' },
+  'High-Speed Wi-Fi': { area: 'wifi', src: 'private-room-study' },
+  'Safe & Secure Living': { area: 'safe', src: 'building-facade' },
+  'Housekeeping Services': { area: 'house' },
+  '24/7 Support': { area: 'sup' },
+}
+
+function Amenities() {
+  const spot = (e) => {
+    const r = e.currentTarget.getBoundingClientRect()
+    e.currentTarget.style.setProperty('--x', `${e.clientX - r.left}px`)
+    e.currentTarget.style.setProperty('--y', `${e.clientY - r.top}px`)
+  }
+
+  return (
+    <section id="amenities" className="nx-section nx-dark nx-amen" aria-label="Amenities">
+      <div className="nx-wrap">
+        <div className="nx-head">
+          <div>
+            <p className="nx-eyebrow nx-eyebrow--light" data-reveal>Amenities</p>
+            <h2 className="nx-h2 nx-h2--light" data-reveal style={{ '--d': '80ms' }}>
+              The essentials, <em>taken care of.</em>
+            </h2>
+          </div>
+          <p className="nx-head__aside nx-head__aside--light" data-reveal style={{ '--d': '140ms' }}>
+            Your living space should make everyday life easier. At Nayasa, essential services and
+            property support are part of the co-living experience.
+          </p>
+        </div>
+
+        <div className="nx-bento">
+          {AMENITIES.map((a, i) => {
+            const b = BENTO[a.title] || {}
+            return (
+              <article
+                key={a.title}
+                className={`nx-tile nx-tile--${b.area} ${b.src ? 'has-img' : ''}`}
+                onPointerMove={spot}
+                data-reveal
+                style={{ '--d': `${i * 90}ms` }}
+              >
+                {b.src && <img src={img(b.src, b.area === 'comm' ? undefined : 'sm')} alt="" loading="lazy" />}
+                <span className="nx-tile__icon">
+                  <Icon name={a.icon} size={24} stroke={1.5} />
+                </span>
+                <div className="nx-tile__text">
+                  <h3>{a.title}</h3>
+                  <p>{a.text}</p>
+                </div>
+                {b.area === 'sup' && (
+                  <a className="nx-tile__call" href={CONTACT.phoneHref}>
+                    <Icon name="phone" size={16} /> {CONTACT.phone}
+                  </a>
+                )}
+              </article>
+            )
+          })}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ───────────── Gallery ───────────── */
 
 const GALLERY_CATEGORIES = ['All', 'Rooms', 'Common Areas', 'Facilities', 'Building']
 
-const today = () => new Date().toISOString().slice(0, 10)
+function Gallery() {
+  const [cat, setCat] = useState('All')
+  const images = useMemo(
+    () => (cat === 'All' ? GALLERY : GALLERY.filter((g) => g.cat === cat)).map((g) => ({ src: img(g.src), alt: g.alt })),
+    [cat],
+  )
 
-function validateForm(values) {
-  const errs = {}
-  if (!values.name || values.name.trim().length < 2) {
-    errs.name = 'Please enter your full name'
-  }
-  if (!values.phone || !/^(\+?91[\s-]?)?[6-9]\d{4}[\s-]?\d{5}$/.test(values.phone.trim())) {
-    errs.phone = 'Enter a valid 10-digit mobile number'
-  }
-  if (!values.type) {
-    errs.type = 'Choose an accommodation type'
-  }
-  if (!values.date) {
-    errs.date = 'Select your preferred visit date'
-  }
-  return errs
+  return (
+    <section id="gallery" className="nx-section nx-dark nx-gallery" aria-label="Gallery">
+      <div className="nx-wrap">
+        <div className="nx-gallery__head">
+          <p className="nx-eyebrow nx-eyebrow--light" data-reveal>Gallery</p>
+          <h2 className="nx-h2 nx-h2--light nx-h2--xl" data-reveal style={{ '--d': '80ms' }}>
+            Real photos. <em>No renders.</em>
+          </h2>
+          <div className="nx-chips" role="group" aria-label="Filter photos" data-reveal style={{ '--d': '140ms' }}>
+            {GALLERY_CATEGORIES.map((c) => (
+              <button key={c} type="button" className={cat === c ? 'is-active' : ''} aria-pressed={cat === c} onClick={() => setCat(c)}>
+                {c}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="nx-gallery__stage" data-reveal style={{ '--d': '160ms' }}>
+        <TiltedGridHero key={cat} images={images} speed={3.4} tileHeight={42} aspectRatio={4 / 3} gap={5} axis={50} curve={70} fade={12} className="h-full w-full" />
+      </div>
+
+      <div className="nx-wrap nx-gallery__foot">
+        <span>{GALLERY.length} photos of the property on ITPL Main Road</span>
+        <Link to="/gallery" className="nx-link nx-link--light">
+          Open the full gallery <Icon name="arrow" size={15} />
+        </Link>
+      </div>
+    </section>
+  )
 }
 
-export default function Home() {
-  usePageTitle()
+/* ───────────── Location ───────────── */
 
-  // Gallery category filter
-  const [activeCategory, setActiveCategory] = useState('All')
+function Location() {
+  return (
+    <section id="location" className="nx-section nx-loc" aria-label="Location">
+      <div className="nx-wrap nx-loc__grid">
+        <div className="nx-loc__text">
+          <p className="nx-eyebrow" data-reveal>Our Location</p>
+          <h2 className="nx-h2 nx-h2--xl" data-reveal style={{ '--d': '80ms' }}>
+            Find us in <em>Whitefield,</em> Bengaluru.
+          </h2>
+          <p className="nx-loc__lede" data-reveal style={{ '--d': '140ms' }}>
+            Located on ITPL Main Road, Nayasa Premium Co-Living places you in Whitefield, one of
+            Bengaluru's established residential and commercial neighbourhoods.
+          </p>
+          <address className="nx-loc__address" data-reveal style={{ '--d': '200ms' }}>
+            <span className="nx-loc__pin">
+              <Icon name="pin" size={22} />
+            </span>
+            <span>
+              <strong>Nayasa Premium Co-Living</strong>
+              ITPL Main Road, Whitefield
+              <br />
+              Bengaluru – 560066, Karnataka
+            </span>
+          </address>
+          <div className="nx-loc__actions" data-reveal style={{ '--d': '240ms' }}>
+            <a href={CONTACT.directions} target="_blank" rel="noopener noreferrer" className="btn btn--dark">
+              Get Directions <Icon name="arrow" size={17} />
+            </a>
+            <a href={CONTACT.phoneHref} className="nx-link">
+              <Icon name="phone" size={15} /> {CONTACT.phone}
+            </a>
+          </div>
+        </div>
 
-  const cylinderImages = (
-    activeCategory === 'All'
-      ? GALLERY
-      : GALLERY.filter((item) => item.cat === activeCategory)
-  ).map((item) => ({
-    src: img(item.src),
-    alt: item.alt,
-  }))
+        <div className="nx-loc__visual" data-reveal style={{ '--d': '120ms' }}>
+          <div className="nx-loc__map">
+            <iframe title="Map showing Nayasa Premium Co-Living on ITPL Main Road, Whitefield" src={CONTACT.mapEmbed} loading="lazy" referrerPolicy="no-referrer-when-downgrade" allowFullScreen />
+          </div>
+          <figure className="nx-loc__photo">
+            <img src={img('building-exterior', 'sm')} alt="Nayasa building facade with glass balconies" loading="lazy" />
+            <figcaption>ITPL Main Road</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+  )
+}
 
-  // FAQ accordion state
-  const [openFaq, setOpenFaq] = useState(0)
+/* ───────────── Good to know + FAQ ───────────── */
 
-  // About image 3D interactive tilt
-  const [aboutTilt, setAboutTilt] = useState({ x: 0, y: 0 })
-  const handleAboutMouseMove = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect()
-    const x = (e.clientX - rect.left) / rect.width - 0.5
-    const y = (e.clientY - rect.top) / rect.height - 0.5
-    setAboutTilt({ x: -(y * 8), y: x * 8 })
-  }
-  const handleAboutMouseLeave = () => {
-    setAboutTilt({ x: 0, y: 0 })
-  }
+const RULE_ICONS = {
+  'Rent Payment': 'wallet',
+  'Security Deposit': 'shield',
+  'Notice Period': 'calendar',
+  Food: 'utensils',
+  'Property Damage': 'wrench',
+  'Terms & Conditions': 'doc',
+}
 
-  // Visit Form state
-  const [form, setForm] = useState({
-    name: '',
-    phone: '',
-    type: 'Private Room',
-    date: '',
-    message: '',
-  })
-  const [errors, setErrors] = useState({})
-  const [formStatus, setFormStatus] = useState('idle')
+function Terms() {
+  return (
+    <section id="rental-info" className="nx-terms" aria-label="Good to know">
+      <div className="nx-wrap nx-terms__grid">
+        <div className="nx-terms__intro">
+          <p className="nx-eyebrow" data-reveal>Good to Know</p>
+          <h2 className="nx-h2 nx-terms__title" data-reveal style={{ '--d': '80ms' }}>
+            Clear terms, <em>upfront.</em>
+          </h2>
+          <p className="nx-terms__lede" data-reveal style={{ '--d': '140ms' }}>
+            Everything worth knowing before you move in, in one place.
+          </p>
+          <div className="nx-terms__links" data-reveal style={{ '--d': '200ms' }}>
+            <Link to="/good-to-know" className="nx-link">
+              Rental guidelines <Icon name="arrow" size={15} />
+            </Link>
+            <a href={CONTACT.phoneHref} className="nx-link">
+              <Icon name="phone" size={14} /> {CONTACT.phone}
+            </a>
+          </div>
+          <figure className="nx-terms__photo" data-reveal="img" style={{ '--d': '160ms' }}>
+            <img src={img('reception-seating', 'sm')} alt="Seating corner at Nayasa with chairs, plants and wall art" loading="lazy" />
+          </figure>
+        </div>
 
-  const handleFormUpdate = (key) => (e) => {
-    setForm((prev) => ({ ...prev, [key]: e.target.value }))
-    if (errors[key]) {
-      setErrors((prev) => ({ ...prev, [key]: undefined }))
-    }
-  }
+        <article className="nx-lease" data-reveal style={{ '--d': '120ms' }}>
+          <header className="nx-lease__head">
+            <div>
+              <p className="nx-lease__kicker">Nayasa Premium Co-Living</p>
+              <h3>House terms</h3>
+            </div>
+            <span className="nx-lease__seal" aria-hidden="true">
+              <img src="/images/nayasa-emblem.webp" alt="" />
+            </span>
+          </header>
 
-  const handleSelectRoomType = (typeName) => {
-    setForm((prev) => ({ ...prev, type: typeName }))
-    const visitSection = document.getElementById('visit') || document.getElementById('book-a-visit')
-    if (visitSection) {
-      visitSection.scrollIntoView({ behavior: 'smooth' })
-    }
-  }
+          <ol className="nx-lease__list">
+            {RULES.map((r, i) => (
+              <li key={r.title}>
+                <span className="nx-lease__icon">
+                  <Icon name={RULE_ICONS[r.title] || 'check'} size={18} stroke={1.6} />
+                </span>
+                <div>
+                  <h4>
+                    <i>0{i + 1}</i> {r.title}
+                  </h4>
+                  <p>{r.text}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
 
-  const handleFormSubmit = async (e) => {
+          <footer className="nx-lease__foot">
+            <span className="nx-lease__sign">Nayasa management</span>
+            <span className="nx-lease__by">A LIFE BY SQFT property · ITPL Main Road, Whitefield</span>
+          </footer>
+        </article>
+      </div>
+    </section>
+  )
+}
+
+// A real photo to sit beside each answer, in FAQ order.
+const FAQ_PHOTOS = [
+  'building-exterior',
+  'private-room-bright',
+  'sharing-room-wide',
+  'rooftop-lounge',
+  'dining-hall',
+  'lobby-entrance',
+  'private-room-door',
+  'lobby-lounge',
+]
+
+function Faq({ onBook }) {
+  const [active, setActive] = useState(0)
+  const q = FAQS[active]
+
+  // Arrow keys move between questions, as in any tab list.
+  const onKey = (e) => {
+    const step = e.key === 'ArrowDown' || e.key === 'ArrowRight' ? 1 : e.key === 'ArrowUp' || e.key === 'ArrowLeft' ? -1 : 0
+    if (!step) return
     e.preventDefault()
-    const validationErrors = validateForm(form)
-    setErrors(validationErrors)
-    if (Object.keys(validationErrors).length > 0) return
+    const next = (active + step + FAQS.length) % FAQS.length
+    setActive(next)
+    document.getElementById(`nx-q-${next}`)?.focus()
+  }
 
-    setFormStatus('sending')
+  return (
+    <section id="faq" className="nx-faq" aria-label="Frequently asked questions">
+      <div className="nx-wrap nx-faq__grid">
+        <div className="nx-faq__side">
+          <p className="nx-eyebrow" data-reveal>FAQ</p>
+          <h2 className="nx-h2 nx-faq__title" data-reveal style={{ '--d': '80ms' }}>
+            Questions, <em>answered.</em>
+          </h2>
+
+          <div className="nx-faq__qs" role="tablist" aria-label="Questions" aria-orientation="vertical" onKeyDown={onKey} data-reveal style={{ '--d': '140ms' }}>
+            {FAQS.map((f, i) => (
+              <button
+                key={f.q}
+                id={`nx-q-${i}`}
+                type="button"
+                role="tab"
+                aria-selected={i === active}
+                aria-controls="nx-faq-answer"
+                tabIndex={i === active ? 0 : -1}
+                className={i === active ? 'is-active' : ''}
+                onClick={() => setActive(i)}
+                onMouseEnter={() => setActive(i)}
+              >
+                <i>0{i + 1}</i>
+                <span>{f.q}</span>
+                <Icon name="arrow" size={15} />
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="nx-answer" id="nx-faq-answer" role="tabpanel" aria-labelledby={`nx-q-${active}`} data-reveal style={{ '--d': '120ms' }}>
+          <div className="nx-answer__photo">
+            {FAQ_PHOTOS.map((src, i) => (
+              <img key={src} className={i === active ? 'is-active' : ''} src={img(src, 'sm')} alt="" loading="lazy" />
+            ))}
+            <span className="nx-answer__count">
+              0{active + 1} <i>/ 0{FAQS.length}</i>
+            </span>
+          </div>
+          <div className="nx-answer__body" key={active}>
+            <p className="nx-answer__q">{q.q}</p>
+            <p className="nx-answer__a">{q.a}</p>
+          </div>
+          <div className="nx-answer__foot">
+            <span>Still have a question?</span>
+            <div>
+              <a href={CONTACT.phoneHref} className="nx-answer__call">
+                <Icon name="phone" size={14} /> {CONTACT.phone}
+              </a>
+              <button type="button" className="btn btn--accent" onClick={() => onBook()}>
+                Book a Visit <Icon name="arrow" size={15} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ───────────── Book a visit ───────────── */
+
+const today = () => new Date().toISOString().slice(0, 10)
+const EMPTY = { name: '', phone: '', type: 'Private Room', date: '', message: '' }
+
+function validate(v) {
+  const e = {}
+  if (!v.name || v.name.trim().length < 2) e.name = 'Please enter your full name'
+  if (!v.phone || !/^(\+?91[\s-]?)?[6-9]\d{4}[\s-]?\d{5}$/.test(v.phone.trim())) e.phone = 'Enter a valid 10-digit mobile number'
+  if (!v.date) e.date = 'Pick a date for your visit'
+  return e
+}
+
+function Visit({ form, setForm }) {
+  const [errors, setErrors] = useState({})
+  const [status, setStatus] = useState('idle')
+
+  const set = (k) => (e) => {
+    setForm((f) => ({ ...f, [k]: e.target.value }))
+    if (errors[k]) setErrors((x) => ({ ...x, [k]: undefined }))
+  }
+
+  const submit = async (e) => {
+    e.preventDefault()
+    const errs = validate(form)
+    setErrors(errs)
+    if (Object.keys(errs).length) return
+    setStatus('sending')
     try {
       if (ENQUIRY_ENDPOINT) {
         const res = await fetch(ENQUIRY_ENDPOINT, {
@@ -106,720 +909,155 @@ export default function Home() {
         })
         if (!res.ok) throw new Error('Submission failed')
       }
-      window.dataLayer?.push({
-        event: 'enquiry_submitted',
-        accommodation: form.type,
-        visit_date: form.date,
-      })
-      setFormStatus('done')
+      window.dataLayer?.push({ event: 'enquiry_submitted', accommodation: form.type, visit_date: form.date })
+      setStatus('done')
     } catch {
-      setFormStatus('error')
+      setStatus('error')
     }
   }
 
-  const formattedVisitDate = form.date
-    ? new Date(form.date).toLocaleDateString('en-IN', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      })
+  const visitDate = form.date
+    ? new Date(form.date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })
     : ''
 
   return (
-    <>
-      {/* 1. HERO */}
-      <Hero />
+    <section id="book-a-visit" className="nx-visit" aria-label="Book a visit">
+      <div className="nx-visit__bg" aria-hidden="true">
+        <img src={img('rooftop-evening')} alt="" loading="lazy" data-parallax="0.12" />
+      </div>
+      <div className="nx-wrap nx-visit__grid">
+        <div className="nx-visit__copy">
+          <p className="nx-eyebrow nx-eyebrow--light" data-reveal>Schedule a Visit</p>
+          <h2 className="nx-h2 nx-h2--light nx-h2--xl" data-reveal style={{ '--d': '80ms' }}>
+            Come see <em>Nayasa</em> for yourself.
+          </h2>
+          <p data-reveal style={{ '--d': '140ms' }}>
+            Get in touch with our team to enquire about available rooms, pricing and property visits.
+          </p>
+          <a href={CONTACT.phoneHref} className="nx-visit__call" data-reveal style={{ '--d': '200ms' }}>
+            <span className="nx-visit__call-icon">
+              <Icon name="phone" size={20} />
+            </span>
+            <span>
+              <small>Call the Nayasa team</small>
+              <strong>{CONTACT.phone}</strong>
+            </span>
+          </a>
+        </div>
 
-      {/* 2. ABOUT NAYASA (With Animated Image) */}
-      <section id="about" className="section section--about" aria-label="About Nayasa">
-        <div className="wrap">
-          <div className="about-editorial">
-            <div className="about-editorial__content">
-              <p className="eyebrow" data-reveal>
-                About Nayasa
-              </p>
-              <h2 className="h2 about-editorial__title" data-reveal style={{ '--d': '80ms' }}>
-                A quiet standard of living in Whitefield.
-              </h2>
-
-              <p className="lede about-editorial__lede" data-reveal style={{ '--d': '140ms' }}>
-                Designed for working professionals seeking comfortable, well-managed accommodation close
-                to their workspace on ITPL Main Road.
-              </p>
-
-              <div className="about-editorial__body" data-reveal style={{ '--d': '200ms' }}>
+        <div className="nx-form" data-reveal style={{ '--d': '160ms' }}>
+          {status === 'done' ? (
+            <div className="nx-form__done">
+              <span className="nx-form__tick">
+                <Icon name="check" size={30} stroke={2} />
+              </span>
+              <h3>Thank you, {form.name.trim().split(' ')[0]}.</h3>
+              {ENQUIRY_ENDPOINT ? (
                 <p>
-                  At Nayasa Premium Co-Living, we bring together quality accommodation, essential
-                  amenities, and professional management by LIFE BY SQFT to make everyday living
-                  straightforward.
+                  Your visit request for <strong>{visitDate}</strong> has been sent. The Nayasa team will get in touch on {form.phone}.
                 </p>
-              </div>
-
-              <div className="about-editorial__highlights" data-reveal style={{ '--d': '240ms' }}>
-                <div className="about-highlight-item">
-                  <strong>ITPL Main Road</strong>
-                  <span>Direct access to Whitefield tech parks &amp; metro</span>
-                </div>
-                <div className="about-highlight-item">
-                  <strong>All-Inclusive</strong>
-                  <span>Housekeeping, Wi-Fi, electricity &amp; backup included</span>
-                </div>
-                <div className="about-highlight-item">
-                  <strong>Professional Care</strong>
-                  <span>Hospitality-led on-site management by LIFE BY SQFT</span>
-                </div>
-              </div>
-
-              <div className="about-editorial__actions" data-reveal style={{ '--d': '280ms' }}>
-                <Link to="/about" className="more-link">
-                  Learn more about Nayasa <Icon name="arrow" size={16} />
-                </Link>
-              </div>
-            </div>
-
-            {/* Animated Media Frame */}
-            <div
-              className="about-editorial__media"
-              data-reveal="img"
-              style={{ '--d': '160ms' }}
-              onMouseMove={handleAboutMouseMove}
-              onMouseLeave={handleAboutMouseLeave}
-            >
-              <figure
-                className="about-editorial__interactive-frame"
-                style={{
-                  transform:
-                    aboutTilt.x || aboutTilt.y
-                      ? `perspective(900px) rotateX(${aboutTilt.x.toFixed(2)}deg) rotateY(${aboutTilt.y.toFixed(2)}deg) scale3d(1.02, 1.02, 1.02)`
-                      : undefined,
+              ) : (
+                <p>
+                  To confirm your visit on <strong>{visitDate}</strong>, please call the Nayasa team on{' '}
+                  <a href={CONTACT.phoneHref}>{CONTACT.phone}</a>.
+                </p>
+              )}
+              <button
+                type="button"
+                className="btn btn--dark"
+                onClick={() => {
+                  setForm(EMPTY)
+                  setStatus('idle')
                 }}
               >
-                <img
-                  src={img('lobby-lounge')}
-                  alt="Nayasa resident lounge with comfortable sofa, armchair and logo wall"
-                  loading="lazy"
-                />
-                <figcaption className="about-editorial__caption">
-                  <span>Resident Lounge · Ground Floor</span>
-                </figcaption>
-              </figure>
-
-              {/* Layered Floating Accent Badge */}
-              <div className="about-floating-chip" aria-hidden="true">
-                <div className="about-floating-chip__icon">
-                  <Icon name="shield" size={18} />
-                </div>
-                <div className="about-floating-chip__text">
-                  <strong>ITPL Main Road</strong>
-                  <span>Verified Property</span>
-                </div>
-              </div>
+                Send another enquiry
+              </button>
             </div>
-          </div>
-        </div>
-      </section>
+          ) : (
+            <form onSubmit={submit} noValidate>
+              <h3 className="nx-form__title">Book your visit</h3>
 
-      {/* 3. ACCOMMODATION & RATES (Clean & Visible in 1 Glance) */}
-      <section id="rooms" className="section section--rooms" aria-label="Accommodation & Rates">
-        <div className="wrap">
-          <div className="section-header">
-            <div>
-              <p className="eyebrow" data-reveal>
-                Accommodation &amp; Rates
-              </p>
-              <h2 className="h2" data-reveal style={{ '--d': '80ms' }}>
-                Simple, transparent living options.
-              </h2>
-            </div>
-            <p className="section-header__desc" data-reveal style={{ '--d': '140ms' }}>
-              Choose between complete independence in a private room or shared living in twin-sharing.
-              All utilities, housekeeping, and high-speed Wi-Fi are included.
-            </p>
-          </div>
-
-          <div className="rooms-duo-grid">
-            {/* Option 1: Private Room */}
-            <article className="room-card" data-reveal style={{ '--d': '100ms' }}>
-              <div className="room-card__media">
-                <img
-                  src={img('private-room-bright')}
-                  alt="Private room at Nayasa with single bed, work study desk and window light"
-                  loading="lazy"
-                  className="room-card__img"
-                />
-                <span className="room-card__badge">Single Occupancy</span>
+              <div className="nx-form__types" role="radiogroup" aria-label="Accommodation type">
+                {ROOM_TYPES.map((r) => (
+                  <label key={r.key} className={form.type === r.formValue ? 'is-active' : ''}>
+                    <input type="radio" name="nx-type" value={r.formValue} checked={form.type === r.formValue} onChange={set('type')} />
+                    <span>{r.label}</span>
+                    <small>From ₹{r.from} {r.unit}</small>
+                  </label>
+                ))}
               </div>
 
-              <div className="room-card__body">
-                <div className="room-card__top">
-                  <h3 className="h3 room-card__title">Private Room</h3>
-                  <div className="room-card__pricing">
-                    <span className="room-card__price-prefix">From</span>
-                    <strong className="room-card__price-amount">₹14,000</strong>
-                    <span className="room-card__price-unit">/ room per month</span>
-                  </div>
-                  <span className="room-card__billing-pill room-card__billing-pill--room">
-                    Priced per full private room
-                  </span>
+              <div className="nx-form__row">
+                <div className={`nx-field ${errors.name ? 'has-error' : ''}`}>
+                  <input id="nx-name" type="text" autoComplete="name" placeholder=" " value={form.name} onChange={set('name')} aria-invalid={!!errors.name} />
+                  <label htmlFor="nx-name">Full name</label>
+                  {errors.name && <span className="nx-field__err">{errors.name}</span>}
                 </div>
+                <div className={`nx-field ${errors.phone ? 'has-error' : ''}`}>
+                  <input id="nx-phone" type="tel" inputMode="tel" autoComplete="tel" placeholder=" " value={form.phone} onChange={set('phone')} aria-invalid={!!errors.phone} />
+                  <label htmlFor="nx-phone">Mobile number</label>
+                  {errors.phone && <span className="nx-field__err">{errors.phone}</span>}
+                </div>
+              </div>
 
-                <p className="room-card__desc">
-                  Enjoy personal space and quiet focus. Ideal for professionals who prefer independent living
-                  while enjoying fully serviced amenities.
+              <div className={`nx-field nx-field--date ${errors.date ? 'has-error' : ''}`}>
+                <input id="nx-date" type="date" min={today()} value={form.date} onChange={set('date')} aria-invalid={!!errors.date} />
+                <label htmlFor="nx-date">Preferred visit date</label>
+                {errors.date && <span className="nx-field__err">{errors.date}</span>}
+              </div>
+
+              <div className="nx-field">
+                <textarea id="nx-msg" rows={2} placeholder=" " value={form.message} onChange={set('message')} />
+                <label htmlFor="nx-msg">Anything we should know? (optional)</label>
+              </div>
+
+              <button type="submit" className="btn btn--accent nx-form__submit" disabled={status === 'sending'}>
+                {status === 'sending' ? 'Sending…' : (
+                  <>
+                    Request a Visit <Icon name="arrow" size={17} />
+                  </>
+                )}
+              </button>
+              {status === 'error' && (
+                <p className="nx-form__error">
+                  Something went wrong. Please call us on <a href={CONTACT.phoneHref}>{CONTACT.phone}</a>.
                 </p>
-
-                <ul className="room-card__features">
-                  <li>
-                    <Icon name="check" size={16} /> Private single bed with comfortable mattress
-                  </li>
-                  <li>
-                    <Icon name="check" size={16} /> Dedicated study desk, executive chair &amp; lamp
-                  </li>
-                  <li>
-                    <Icon name="check" size={16} /> Wooden wardrobe &amp; bedside storage
-                  </li>
-                  <li>
-                    <Icon name="check" size={16} /> Daily housekeeping, high-speed Wi-Fi &amp; power backup
-                  </li>
-                </ul>
-
-                <div className="room-card__actions">
-                  <button
-                    type="button"
-                    className="btn btn--dark btn--block"
-                    onClick={() => handleSelectRoomType('Private Room')}
-                  >
-                    Enquire for Private Room <Icon name="arrow" size={16} />
-                  </button>
-                  <Link to="/rooms#private" className="more-link room-card__link">
-                    View room specifications
-                  </Link>
-                </div>
-              </div>
-            </article>
-
-            {/* Option 2: Double Sharing */}
-            <article className="room-card" data-reveal style={{ '--d': '180ms' }}>
-              <div className="room-card__media">
-                <img
-                  src={img('sharing-room-wide')}
-                  alt="Double-sharing room at Nayasa with two beds, study desks and wooden wardrobes"
-                  loading="lazy"
-                  className="room-card__img"
-                />
-                <span className="room-card__badge">Twin Sharing</span>
-              </div>
-
-              <div className="room-card__body">
-                <div className="room-card__top">
-                  <h3 className="h3 room-card__title">Double Sharing Room</h3>
-                  <div className="room-card__pricing">
-                    <span className="room-card__price-prefix">From</span>
-                    <strong className="room-card__price-amount">₹10,000</strong>
-                    <span className="room-card__price-unit">/ bed per month</span>
-                  </div>
-                  <span className="room-card__billing-pill room-card__billing-pill--bed">
-                    Priced per individual bed
-                  </span>
-                </div>
-
-                <p className="room-card__desc">
-                  Spacious accommodation for two with personal workspace and individual storage,
-                  balancing convenience with social living.
-                </p>
-
-                <ul className="room-card__features">
-                  <li>
-                    <Icon name="check" size={16} /> Two individual single beds with dedicated spacing
-                  </li>
-                  <li>
-                    <Icon name="check" size={16} /> Individual study desks &amp; reading chairs
-                  </li>
-                  <li>
-                    <Icon name="check" size={16} /> Separate wooden wardrobes for each resident
-                  </li>
-                  <li>
-                    <Icon name="check" size={16} /> Daily housekeeping, high-speed Wi-Fi &amp; power backup
-                  </li>
-                </ul>
-
-                <div className="room-card__actions">
-                  <button
-                    type="button"
-                    className="btn btn--dark btn--block"
-                    onClick={() => handleSelectRoomType('Double Sharing')}
-                  >
-                    Enquire for Double Sharing <Icon name="arrow" size={16} />
-                  </button>
-                  <Link to="/rooms#sharing" className="more-link room-card__link">
-                    View room specifications
-                  </Link>
-                </div>
-              </div>
-            </article>
-          </div>
-
-          <div className="rooms-footer-note" data-reveal style={{ '--d': '240ms' }}>
-            <p>
-              *Starting monthly rates shown. Security deposit and optional meal packages can be discussed
-              during your visit.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* 4. AMENITIES (Compact & Visible in 1 Glance) */}
-      <section id="amenities" className="section section--amenities" aria-label="Amenities">
-        <div className="wrap">
-          <div className="section-header">
-            <div>
-              <p className="eyebrow" data-reveal>
-                Inclusions &amp; Amenities
-              </p>
-              <h2 className="h2" data-reveal style={{ '--d': '80ms' }}>
-                Everything you need to live comfortably.
-              </h2>
-            </div>
-            <p className="section-header__desc" data-reveal style={{ '--d': '140ms' }}>
-              From fast connectivity to clean common areas, the essentials are maintained daily.
-            </p>
-          </div>
-
-          <div className="amenities-clean-grid" data-reveal style={{ '--d': '160ms' }}>
-            {AMENITIES.slice(0, 6).map((item) => (
-              <div key={item.title} className="amenity-clean-card">
-                <div className="amenity-clean-card__icon">
-                  <Icon name={item.icon} size={22} />
-                </div>
-                <h3 className="amenity-clean-card__title">{item.title}</h3>
-                <p className="amenity-clean-card__text">{item.text}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="amenities-footer-bar" data-reveal style={{ '--d': '220ms' }}>
-            <Link to="/amenities" className="more-link">
-              Explore complete amenities guide <Icon name="arrow" size={16} />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* 5. LIFE AT NAYASA / 3D PHOTO GALLERY */}
-      <section id="gallery" className="section section--gallery" aria-label="Life at Nayasa Gallery">
-        <div className="wrap">
-          <div className="section-header">
-            <div>
-              <p className="eyebrow" data-reveal>
-                Property Gallery
-              </p>
-              <h2 className="h2" data-reveal style={{ '--d': '80ms' }}>
-                Life at Nayasa
-              </h2>
-            </div>
-            <p className="section-header__desc" data-reveal style={{ '--d': '140ms' }}>
-              Actual, unedited photography of our building, bedrooms, common lounges, and rooftop.
-            </p>
-          </div>
-
-          {/* Category Filter Chips */}
-          <div className="gallery-toolbar" data-reveal style={{ '--d': '120ms' }}>
-            <div className="chips" role="group" aria-label="Filter gallery by category">
-              {GALLERY_CATEGORIES.map((cat) => (
-                <button
-                  key={cat}
-                  type="button"
-                  className={`chip ${activeCategory === cat ? 'is-active' : ''}`}
-                  onClick={() => setActiveCategory(cat)}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-            <Link to="/gallery" className="gallery-toolbar__all-link">
-              View all 35 photos in Full Gallery <Icon name="arrow" size={16} />
-            </Link>
-          </div>
-
-          {/* Clean 3D Cylinder Stage — Compact height to fit in 1 glance */}
-          <div className="tilted-gallery-stage" data-reveal style={{ '--d': '160ms' }}>
-            <TiltedGridHero
-              images={cylinderImages}
-              speed={3.6}
-              tileHeight={30}
-              aspectRatio={16 / 9}
-              gap={6}
-              axis={50}
-              curve={72}
-              fade={14}
-              className="h-full w-full"
-            />
-          </div>
-
-          <div className="gallery-caption-bar" data-reveal style={{ '--d': '200ms' }}>
-            <span>35 unedited property captures · ITPL Main Road, Whitefield</span>
-            <Link to="/gallery" className="more-link">
-              Browse full photo library <Icon name="arrow" size={15} />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* 6. LOCATION */}
-      <section id="location" className="section section--location" aria-label="Location">
-        <div className="wrap">
-          <div className="location-editorial">
-            <div className="location-editorial__info">
-              <p className="eyebrow" data-reveal>
-                Location
-              </p>
-              <h2 className="h2 location-editorial__title" data-reveal style={{ '--d': '80ms' }}>
-                Find us in Whitefield, Bengaluru
-              </h2>
-
-              <p className="lede location-editorial__lede" data-reveal style={{ '--d': '140ms' }}>
-                Located directly on ITPL Main Road, Nayasa places you in the heart of Whitefield's
-                residential and commercial corridor.
-              </p>
-
-              <div className="location-commute-list" data-reveal style={{ '--d': '180ms' }}>
-                <div className="commute-item">
-                  <strong>ITPB / International Tech Park</strong>
-                  <span>~5 minutes</span>
-                </div>
-                <div className="commute-item">
-                  <strong>Whitefield Metro Station</strong>
-                  <span>~7 minutes</span>
-                </div>
-                <div className="commute-item">
-                  <strong>Nexus Shantiniketan Mall</strong>
-                  <span>~10 minutes</span>
-                </div>
-              </div>
-
-              <address className="location-address-box" data-reveal style={{ '--d': '220ms' }}>
-                <div className="location-address-box__icon">
-                  <Icon name="pin" size={22} />
-                </div>
-                <div className="location-address-box__content">
-                  <strong className="location-address-box__title">Nayasa Premium Co-Living</strong>
-                  <p className="location-address-box__text">
-                    ITPL Main Road, Whitefield, Bengaluru, Karnataka 560066
-                  </p>
-                </div>
-              </address>
-
-              <div className="location-editorial__actions" data-reveal style={{ '--d': '260ms' }}>
-                <a
-                  href={CONTACT.mapLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn--dark"
-                >
-                  <Icon name="map" size={16} /> Open in Google Maps
-                </a>
-              </div>
-            </div>
-
-            <div className="location-editorial__map-frame" data-reveal="img" style={{ '--d': '180ms' }}>
-              <iframe
-                title="Google Maps Location of Nayasa Premium Co-Living"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3887.892697843815!2d77.72898!3d12.97868!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bae118b6e22e96d%3A0x6b05eb5dc0c4b4f5!2sITPL%20Main%20Rd%2C%20Whitefield%2C%20Bengaluru%2C%20Karnataka!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin"
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                allowFullScreen=""
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 7. FAQS (Revived Complete 2-Column Editorial Layout) */}
-      <section id="faq" className="section section--faq" aria-label="Frequently Asked Questions">
-        <div className="wrap">
-          <div className="faq-editorial">
-            <div className="faq-editorial__aside">
-              <p className="eyebrow" data-reveal>
-                Frequently Asked Questions
-              </p>
-              <h2 className="h2 faq-editorial__title" data-reveal style={{ '--d': '80ms' }}>
-                Have questions? We've got answers.
-              </h2>
-              <p className="faq-editorial__lead" data-reveal style={{ '--d': '140ms' }}>
-                Everything you need to know about room types, pricing, amenities, deposit and
-                visiting the property.
-              </p>
-
-              {/* Direct Assistance Card */}
-              <div className="faq-help-card" data-reveal style={{ '--d': '200ms' }}>
-                <span className="faq-help-card__label">Need more information?</span>
-                <p className="faq-help-card__text">
-                  Our on-site property team is available daily to help you pick the right room or clarify move-in terms.
-                </p>
-                <a
-                  href={CONTACT.phoneHref}
-                  className="btn btn--dark btn--block faq-help-card__btn"
-                >
-                  <Icon name="phone" size={16} /> Call {CONTACT.phone}
-                </a>
-                <Link to="/faq" className="more-link">
-                  Visit full FAQ page <Icon name="arrow" size={16} />
-                </Link>
-              </div>
-            </div>
-
-            {/* Accordion Component */}
-            <div className="faq-accordion" data-reveal style={{ '--d': '120ms' }}>
-              {FAQS.map((faq, i) => {
-                const isOpen = openFaq === i
-                return (
-                  <div
-                    key={faq.q}
-                    className={`faq-accordion__item ${isOpen ? 'is-open' : ''}`}
-                  >
-                    <h3>
-                      <button
-                        type="button"
-                        aria-expanded={isOpen}
-                        aria-controls={`faq-answer-${i}`}
-                        className="faq-accordion__trigger"
-                        onClick={() => setOpenFaq(isOpen ? -1 : i)}
-                      >
-                        <span className="faq-accordion__q">{faq.q}</span>
-                        <span className="faq-accordion__icon" aria-hidden="true">
-                          <Icon name="plus" size={14} />
-                        </span>
-                      </button>
-                    </h3>
-                    <div
-                      id={`faq-answer-${i}`}
-                      className="faq-accordion__panel"
-                      role="region"
-                      aria-labelledby={`faq-question-${i}`}
-                    >
-                      <div className="faq-accordion__inner">
-                        <p>{faq.a}</p>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 8. SCHEDULE A VISIT (Good Looking Form Card) */}
-      <section id="visit" className="section section--visit" aria-label="Book a Visit">
-        <div className="wrap">
-          <div className="visit-editorial">
-            <div className="visit-info">
-              <p className="eyebrow" data-reveal>
-                Schedule a Visit
-              </p>
-              <h2 className="h2 visit-info__title" data-reveal style={{ '--d': '80ms' }}>
-                Come see Nayasa for yourself.
-              </h2>
-              <p className="visit-info__lead" data-reveal style={{ '--d': '140ms' }}>
-                We conduct guided in-person property walkthroughs daily between 10:00 AM and 7:00 PM.
-                Inspect the bedrooms, common lounges, rooftop, and dining spaces in person.
-              </p>
-
-              <ul className="visit-perks" data-reveal style={{ '--d': '180ms' }}>
-                <li className="visit-perk-item">
-                  <Icon name="check" size={16} />
-                  <span>Zero brokerage or upfront booking fees</span>
-                </li>
-                <li className="visit-perk-item">
-                  <Icon name="check" size={16} />
-                  <span>Guided room-by-room tour with on-site staff</span>
-                </li>
-                <li className="visit-perk-item">
-                  <Icon name="check" size={16} />
-                  <span>Same-day and weekend visit slots available</span>
-                </li>
-              </ul>
-
-              <a
-                href={CONTACT.phoneHref}
-                className="visit-direct-call"
-                data-reveal
-                style={{ '--d': '220ms' }}
-                aria-label={`Call ${CONTACT.phone}`}
-              >
-                <div className="visit-direct-call__icon">
-                  <Icon name="phone" size={18} />
-                </div>
-                <div className="visit-direct-call__text">
-                  <span>Prefer to call or WhatsApp?</span>
-                  <strong>{CONTACT.phone}</strong>
-                </div>
-              </a>
-            </div>
-
-            <div className="visit-form-card" data-reveal style={{ '--d': '160ms' }}>
-              <div className="visit-form-card__head">
-                <h3 className="visit-form-card__title">Schedule Your Walkthrough</h3>
-                <p className="visit-form-card__desc">
-                  Select your accommodation preference and pick a preferred date.
-                </p>
-              </div>
-
-              {formStatus === 'done' ? (
-                <div className="form-feedback form-feedback--success">
-                  <div className="form-feedback__icon">
-                    <Icon name="check" size={28} stroke={2} />
-                  </div>
-                  <h3 className="h3">Thank you, {form.name.split(' ')[0]}.</h3>
-                  <p className="form-feedback__msg">
-                    Your visit request for <strong>{formattedVisitDate}</strong> ({form.type}) has been
-                    received. Our team will contact you on <strong>{form.phone}</strong> to confirm the
-                    walkthrough time.
-                  </p>
-                  <button
-                    type="button"
-                    className="btn btn--outline"
-                    onClick={() => {
-                      setFormStatus('idle')
-                      setForm({
-                        name: '',
-                        phone: '',
-                        type: 'Private Room',
-                        date: '',
-                        message: '',
-                      })
-                    }}
-                  >
-                    Schedule Another Visit
-                  </button>
-                </div>
-              ) : (
-                <form onSubmit={handleFormSubmit} noValidate>
-                  {/* Segmented Room Preference */}
-                  <div className="preference-segmented" role="radiogroup" aria-label="Room Preference">
-                    <label
-                      className={`preference-pill ${
-                        form.type === 'Private Room' ? 'is-active' : ''
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="visit-room-type"
-                        value="Private Room"
-                        checked={form.type === 'Private Room'}
-                        onChange={handleFormUpdate('type')}
-                      />
-                      <span className="preference-pill__title">Private Room</span>
-                      <span className="preference-pill__price">From ₹14,000 / room</span>
-                    </label>
-
-                    <label
-                      className={`preference-pill ${
-                        form.type === 'Double Sharing' ? 'is-active' : ''
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="visit-room-type"
-                        value="Double Sharing"
-                        checked={form.type === 'Double Sharing'}
-                        onChange={handleFormUpdate('type')}
-                      />
-                      <span className="preference-pill__title">Double Sharing</span>
-                      <span className="preference-pill__price">From ₹10,000 / bed</span>
-                    </label>
-                  </div>
-
-                  <div className="visit-form-row">
-                    <div className={`visit-field ${errors.name ? 'has-error' : ''}`}>
-                      <label htmlFor="home-form-name">Full Name *</label>
-                      <input
-                        id="home-form-name"
-                        type="text"
-                        autoComplete="name"
-                        placeholder="e.g. Rahul Sharma"
-                        value={form.name}
-                        onChange={handleFormUpdate('name')}
-                      />
-                      {errors.name && <span className="visit-field__err">{errors.name}</span>}
-                    </div>
-
-                    <div className={`visit-field ${errors.phone ? 'has-error' : ''}`}>
-                      <label htmlFor="home-form-phone">Mobile Number *</label>
-                      <input
-                        id="home-form-phone"
-                        type="tel"
-                        inputMode="tel"
-                        autoComplete="tel"
-                        placeholder="10-digit number"
-                        value={form.phone}
-                        onChange={handleFormUpdate('phone')}
-                      />
-                      {errors.phone && <span className="visit-field__err">{errors.phone}</span>}
-                    </div>
-                  </div>
-
-                  <div className="visit-form-row">
-                    <div className={`visit-field ${errors.date ? 'has-error' : ''}`}>
-                      <label htmlFor="home-form-date">Preferred Date *</label>
-                      <input
-                        id="home-form-date"
-                        type="date"
-                        min={today()}
-                        value={form.date}
-                        onChange={handleFormUpdate('date')}
-                      />
-                      {errors.date && <span className="visit-field__err">{errors.date}</span>}
-                    </div>
-
-                    <div className="visit-field">
-                      <label htmlFor="home-form-time">Preferred Time Slot</label>
-                      <select id="home-form-time" defaultValue="Morning (10 AM – 1 PM)">
-                        <option value="Morning (10 AM – 1 PM)">Morning (10 AM – 1 PM)</option>
-                        <option value="Afternoon (1 PM – 4 PM)">Afternoon (1 PM – 4 PM)</option>
-                        <option value="Evening (4 PM – 7 PM)">Evening (4 PM – 7 PM)</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="visit-field" style={{ marginBottom: '14px' }}>
-                    <label htmlFor="home-form-msg">Questions or Move-in Date (Optional)</label>
-                    <textarea
-                      id="home-form-msg"
-                      rows={2}
-                      placeholder="e.g. Planning to move in next month..."
-                      value={form.message}
-                      onChange={handleFormUpdate('message')}
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="btn btn--accent visit-form__submit-btn"
-                    disabled={formStatus === 'sending'}
-                  >
-                    {formStatus === 'sending' ? (
-                      'Submitting Visit Request…'
-                    ) : (
-                      <>
-                        Confirm Visit Request <Icon name="arrow" size={16} />
-                      </>
-                    )}
-                  </button>
-
-                  <p className="visit-form__security-note">
-                    Instant confirmation. Your details are strictly used to coordinate your walkthrough.
-                  </p>
-                </form>
               )}
-            </div>
-          </div>
+            </form>
+          )}
         </div>
-      </section>
-    </>
+      </div>
+    </section>
+  )
+}
+
+/* ───────────── Page ───────────── */
+
+export default function Home() {
+  usePageTitle()
+  const [form, setForm] = useState(EMPTY)
+
+  const book = (type) => {
+    if (typeof type === 'string') setForm((f) => ({ ...f, type }))
+    document.getElementById('book-a-visit')?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  return (
+    <div className="nx">
+      <Hero />
+      <Ticker />
+
+      <About />
+
+      <Walk onBook={book} />
+      <Rooms onBook={book} />
+      <Pricing onBook={book} />
+      <Amenities />
+      <Gallery />
+      <Location />
+      <Terms />
+      <Faq onBook={book} />
+      <Visit form={form} setForm={setForm} />
+    </div>
   )
 }

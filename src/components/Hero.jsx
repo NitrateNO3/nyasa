@@ -1,189 +1,213 @@
-import { useEffect, useState } from 'react'
-import { img } from '../data'
+import { useEffect, useRef, useState } from 'react'
+import { CONTACT, img } from '../data'
 import Icon from './Icon'
 
-const HERO_VIEWS = [
-  {
-    id: 'rooftop',
-    label: 'Rooftop Lounge',
-    shortLabel: 'Rooftop',
-    tag: 'Twilight Terrace',
-    src: 'rooftop-lounge',
-    alt: 'Covered rooftop recreational lounge at Nayasa with swing chairs and evening lighting',
-  },
-  {
-    id: 'private',
-    label: 'Private Room',
-    shortLabel: 'Private',
-    tag: 'Single Suite',
-    src: 'private-room-bright',
-    alt: 'Bright private room at Nayasa with single bed, work desk and window light',
-  },
-  {
-    id: 'lounge',
-    label: 'Resident Lounge',
-    shortLabel: 'Lounge',
-    tag: 'Ground Floor',
-    src: 'lobby-lounge',
-    alt: 'Common lounge at Nayasa with sofa, armchair and reception area',
-  },
-  {
-    id: 'exterior',
-    label: 'Building Exterior',
-    shortLabel: 'Exterior',
-    tag: 'ITPL Main Road',
-    src: 'building-exterior',
-    alt: 'Contemporary Nayasa building facade on ITPL Main Road, Whitefield',
-  },
-]
+/*
+  The opening screen is a living mosaic of the property: the headline, a large photo, two
+  room photos, the starting price and a visit card, all visible at once. Each photo tile
+  plays through a few real photos of its space; a new photo arrives like the rooftop's
+  bamboo blinds opening slat by slat, and the tiles take turns so something is always
+  gently changing. The photos drift slightly with the pointer for depth.
+*/
 
-const SLIDE_INTERVAL = 6000
+const TILES = {
+  main: {
+    every: 6000,
+    offset: 0,
+    shots: [
+      { src: 'rooftop-lounge', label: 'Rooftop lounge', alt: 'Covered rooftop lounge with hanging swing chairs and warm pendant lights at dusk' },
+      { src: 'lobby-lounge', label: 'Resident lounge', alt: 'Lounge with a grey sofa, patterned armchair and the Nayasa logo wall' },
+      { src: 'dining-hall-long', label: 'Dining hall', alt: 'Long dining hall with wooden tables and benches' },
+      { src: 'rooftop-seating', label: 'Rooftop seating', alt: 'Terracotta lounge chairs around low tables on turf flooring' },
+    ],
+  },
+  private: {
+    every: 6000,
+    offset: 2000,
+    title: 'Private rooms',
+    note: 'From ₹14,000 / room',
+    shots: [
+      { src: 'private-room-bright', alt: 'Private room with a single bed, striped rug and a desk by the window' },
+      { src: 'private-room-study', alt: 'Private room with a desk, yellow chair and a large window' },
+      { src: 'private-room-window', alt: 'Private room with a window, curtains and a yellow desk chair' },
+    ],
+  },
+  sharing: {
+    every: 6000,
+    offset: 4000,
+    title: 'Double sharing',
+    note: 'From ₹10,000 / bed',
+    shots: [
+      { src: 'sharing-room-wide', alt: 'Double-sharing room with two beds, a desk and a wooden wardrobe' },
+      { src: 'sharing-room-twin', alt: 'Twin beds placed either side of a shared desk' },
+      { src: 'sharing-room-rug', alt: 'Double-sharing room with two beds, a desk and a striped rug' },
+    ],
+  },
+}
+
+const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+// Plays through a tile's photos, starting after its offset so the tiles take turns.
+function usePlaylist({ shots, every, offset }) {
+  const [state, setState] = useState({ cur: 0, prev: -1 })
+  useEffect(() => {
+    if (reduced()) return
+    let interval
+    const next = () => setState(({ cur }) => ({ prev: cur, cur: (cur + 1) % shots.length }))
+    const start = setTimeout(() => {
+      next()
+      interval = setInterval(next, every)
+    }, every + offset)
+    return () => {
+      clearTimeout(start)
+      clearInterval(interval)
+    }
+  }, [shots, every, offset])
+  return state
+}
+
+function Blinds({ tile, sizes, eager }) {
+  const { cur, prev } = usePlaylist(tile)
+  const label = tile.shots[cur].label
+  return (
+    <div className="hb__photos">
+      {tile.shots.map((s, i) => (
+        <img
+          key={s.src}
+          className={i === cur ? 'is-cur' : i === prev ? 'is-prev' : ''}
+          src={img(s.src)}
+          srcSet={`${img(s.src, 'sm')} 800w, ${img(s.src)} 1800w`}
+          sizes={sizes}
+          alt={i === cur ? s.alt : ''}
+          loading={eager && i === 0 ? 'eager' : 'lazy'}
+          fetchPriority={eager && i === 0 ? 'high' : undefined}
+        />
+      ))}
+      {label && (
+        <span className="hb__label" key={cur}>
+          <i>0{cur + 1}</i> {label}
+        </span>
+      )}
+    </div>
+  )
+}
 
 export default function Hero() {
-  const [active, setActive] = useState(0)
-  const [isPaused, setIsPaused] = useState(false)
+  const root = useRef(null)
 
   useEffect(() => {
-    if (isPaused) return
-    const timer = setInterval(() => {
-      setActive((prev) => (prev + 1) % HERO_VIEWS.length)
-    }, SLIDE_INTERVAL)
-    return () => clearInterval(timer)
-  }, [isPaused, active])
+    const el = root.current
+    if (!el || reduced()) return
+    let raf = 0
+    let x = 0
+    let y = 0
+    const apply = () => {
+      raf = 0
+      el.style.setProperty('--mx', x.toFixed(3))
+      el.style.setProperty('--my', y.toFixed(3))
+    }
+    const onMove = (e) => {
+      if (e.pointerType !== 'mouse') return
+      x = (e.clientX / window.innerWidth) * 2 - 1
+      y = (e.clientY / window.innerHeight) * 2 - 1
+      if (!raf) raf = requestAnimationFrame(apply)
+    }
+    el.addEventListener('pointermove', onMove, { passive: true })
+    return () => {
+      cancelAnimationFrame(raf)
+      el.removeEventListener('pointermove', onMove)
+    }
+  }, [])
 
   const scrollTo = (id) => (e) => {
     e.preventDefault()
-    const target = document.getElementById(id)
-    if (target) {
-      target.scrollIntoView({ behavior: 'smooth' })
-      window.history.pushState(null, '', `#${id}`)
-    }
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+    window.history.pushState(null, '', `#${id}`)
   }
 
   return (
-    <section className="hero" aria-label="Welcome to Nayasa Premium Co-Living">
-      <div className="wrap hero__grid">
-        {/* Left Column: Editorial Content */}
-        <div className="hero__content">
-          <p className="hero__meta" data-reveal style={{ '--d': '60ms' }}>
-            Whitefield, Bengaluru · ITPL Main Road
+    <section className="hb" ref={root} aria-label="Welcome to Nayasa Premium Co-Living">
+      <div className="hb__grid">
+        <div className="hb__intro">
+          <p className="hb__chip hb-in" style={{ '--i': 0 }}>
+            <span className="hb__dot" aria-hidden="true" />
+            ITPL Main Road · Whitefield, Bengaluru
           </p>
-
-          <h1 className="hero__headline" data-reveal style={{ '--d': '120ms' }}>
-            Live Comfort.
-            <br />
-            Live Nayasa.
+          <h1 className="hb__title">
+            <span className="hb__line">
+              <span style={{ '--i': 1 }}>Live Comfort.</span>
+            </span>
+            <span className="hb__line">
+              <span style={{ '--i': 2 }}>
+                Live <em>Nayasa.</em>
+              </span>
+            </span>
           </h1>
-
-          <p className="hero__lead" data-reveal style={{ '--d': '180ms' }}>
-            Thoughtfully managed private and double-sharing accommodation designed for working
-            professionals on ITPL Main Road. All-inclusive living with high-speed Wi-Fi, daily
-            housekeeping, and 24/7 power backup.
+          <p className="hb__lead hb-in" style={{ '--i': 3 }}>
+            Premium private and double-sharing rooms, professionally managed by LIFE BY SQFT, with
+            the essentials taken care of so you can focus on living your life.
           </p>
-
-          <div className="hero__rate-line" data-reveal style={{ '--d': '220ms' }}>
-            <span>From <strong>₹10,000/bed</strong> in Double Sharing</span>
-            <span className="hero__rate-sep">/</span>
-            <span>From <strong>₹14,000/room</strong> in Private</span>
-          </div>
-
-          <div className="hero__actions" data-reveal style={{ '--d': '260ms' }}>
+          <div className="hb__links hb-in" style={{ '--i': 4 }}>
             <a href="#rooms" onClick={scrollTo('rooms')} className="btn btn--dark">
-              Explore Rooms <Icon name="arrow" size={16} />
+              Explore Rooms <Icon name="arrow" size={17} />
             </a>
-            <a href="#visit" onClick={scrollTo('visit')} className="btn btn--accent">
-              Book a Visit
+            <a href="#spaces" onClick={scrollTo('spaces')} className="nx-link">
+              Take a look around
             </a>
           </div>
-
-          <p className="hero__subtext" data-reveal style={{ '--d': '300ms' }}>
-            A LIFE BY SQFT Brand · Professional On-Site Management
-          </p>
         </div>
 
-        {/* Right Column: Architectural Visual (Side Photo Slideshow) */}
-        <div
-          className="hero__visual"
-          data-reveal
-          style={{ '--d': '160ms' }}
-          onMouseEnter={() => setIsPaused(true)}
-          onMouseLeave={() => setIsPaused(false)}
-        >
-          <div className="hero__frame">
-            {/* Top Bar: Verification Badge & Slide Navigation */}
-            <div className="hero__frame-top">
-              <div className="hero__status-pill">
-                <span className="hero__status-dot" aria-hidden="true" />
-                <span>Actual Property · ITPL Main Rd</span>
-              </div>
+        <figure className="hb__tile hb__tile--main" style={{ '--t': 0 }}>
+          <Blinds tile={TILES.main} sizes="(min-width: 900px) 50vw, 100vw" eager />
+          <div className="hb__stamp" aria-hidden="true">
+            <svg viewBox="0 0 120 120">
+              <defs>
+                <path id="hb-circle" d="M60 60m-46 0a46 46 0 1 1 92 0a46 46 0 1 1-92 0" />
+              </defs>
+              <text>
+                <textPath href="#hb-circle">REAL PHOTOS · ACTUAL PROPERTY · NAYASA ·</textPath>
+              </text>
+            </svg>
+            <img src="/images/nayasa-emblem.webp" alt="" />
+          </div>
+        </figure>
 
-              <div className="hero__nav">
-                <span className="hero__counter">
-                  0{active + 1}<i>/</i>0{HERO_VIEWS.length}
-                </span>
-                <div className="hero__nav-arrows">
-                  <button
-                    type="button"
-                    className="hero__arrow"
-                    onClick={() => setActive((prev) => (prev - 1 + HERO_VIEWS.length) % HERO_VIEWS.length)}
-                    aria-label="Previous property photo"
-                  >
-                    <Icon name="left" size={13} stroke={2} />
-                  </button>
-                  <button
-                    type="button"
-                    className="hero__arrow"
-                    onClick={() => setActive((prev) => (prev + 1) % HERO_VIEWS.length)}
-                    aria-label="Next property photo"
-                  >
-                    <Icon name="right" size={13} stroke={2} />
-                  </button>
-                </div>
-              </div>
-            </div>
+        <a href="#pricing" onClick={scrollTo('pricing')} className="hb__tile hb__price" style={{ '--t': 1 }}>
+          <span className="hb__kicker">Rooms from</span>
+          <strong>₹10,000</strong>
+          <span className="hb__price-unit">per bed, double sharing</span>
+          <span className="hb__price-foot">
+            <span>
+              Private rooms from <b>₹14,000</b>
+            </span>
+            <span className="hb__round" aria-hidden="true">
+              <Icon name="arrow" size={16} />
+            </span>
+          </span>
+        </a>
 
-            {/* Photos */}
-            {HERO_VIEWS.map((view, i) => (
-              <figure
-                key={view.id}
-                className={`hero__photo ${i === active ? 'is-active' : ''}`}
-                aria-hidden={i !== active}
-              >
-                <img
-                  src={img(view.src)}
-                  srcSet={`${img(view.src, 'sm')} 800w, ${img(view.src)} 1800w`}
-                  sizes="(max-width: 900px) 95vw, 50vw"
-                  alt={view.alt}
-                  fetchPriority={i === 0 ? 'high' : 'low'}
-                  loading={i === 0 ? 'eager' : 'lazy'}
-                />
-              </figure>
-            ))}
+        {['private', 'sharing'].map((key, i) => (
+          <a key={key} href="#rooms" onClick={scrollTo('rooms')} className="hb__tile hb__tile--room" style={{ '--t': 2 + i }}>
+            <Blinds tile={TILES[key]} sizes="(min-width: 900px) 25vw, 50vw" />
+            <span className="hb__room">
+              <strong>{TILES[key].title}</strong>
+              <small>{TILES[key].note}</small>
+            </span>
+          </a>
+        ))}
 
-            {/* Bottom Bar: Caption and Segment Switcher */}
-            <div className="hero__frame-bottom">
-              <div className="hero__caption">
-                <span className="hero__caption-tag">{HERO_VIEWS[active].tag}</span>
-                <h2 className="hero__caption-title">{HERO_VIEWS[active].label}</h2>
-              </div>
-
-              {/* Clean Segment Switcher */}
-              <div className="hero__switcher" role="tablist" aria-label="Property photo selection">
-                {HERO_VIEWS.map((view, i) => (
-                  <button
-                    key={view.id}
-                    role="tab"
-                    aria-selected={i === active}
-                    aria-label={`View ${view.label}`}
-                    className={`hero__switcher-tab ${i === active ? 'is-active' : ''}`}
-                    onClick={() => setActive(i)}
-                  >
-                    <span className="hero__switcher-name hero__switcher-name--full">{view.label}</span>
-                    <span className="hero__switcher-name hero__switcher-name--short">{view.shortLabel || view.label.split(' ')[0]}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
+        <div className="hb__tile hb__visit" style={{ '--t': 4 }}>
+          <p className="hb__kicker">Schedule a visit</p>
+          <p className="hb__visit-title">
+            Come see it <em>in person.</em>
+          </p>
+          <div className="hb__visit-actions">
+            <a href="#book-a-visit" onClick={scrollTo('book-a-visit')} className="btn btn--accent">
+              Book a Visit <Icon name="arrow" size={16} />
+            </a>
+            <a href={CONTACT.phoneHref} className="hb__phone">
+              <Icon name="phone" size={14} /> {CONTACT.phone}
+            </a>
           </div>
         </div>
       </div>

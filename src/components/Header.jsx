@@ -34,9 +34,18 @@ export default function Header() {
       const y = window.scrollY
       const max = document.documentElement.scrollHeight - window.innerHeight
       setScrolled(y > 36)
-      setHidden(y > 280 && y > last + 3)
-      if (y < last - 3 || y < 280) setHidden(false)
-      last = y
+      // Only a deliberate move changes the header; the few-pixel drift at the end of a
+      // trackpad scroll leaves it as it was.
+      if (y < 280) setHidden(false)
+      else if (y > last + 3) setHidden(true)
+      else if (y < last - 3) setHidden(false)
+      // Keep it out of the way while the home page's pinned walk-through fills the screen.
+      const walk = document.querySelector('.nx-walk.is-pinned')
+      if (walk) {
+        const r = walk.getBoundingClientRect()
+        if (r.top <= 1 && r.bottom >= window.innerHeight - 1) setHidden(true)
+      }
+      if (Math.abs(y - last) > 3 || y < 280) last = y
       if (progress.current) progress.current.style.transform = `scaleX(${max > 0 ? y / max : 0})`
     }
     const onScroll = () => {
