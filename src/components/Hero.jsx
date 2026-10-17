@@ -129,10 +129,6 @@ export default function Hero() {
     <section className="hb" ref={root} aria-label="Welcome to Nayasa Premium Co-Living">
       <div className="hb__grid">
         <div className="hb__intro">
-          <p className="hb__chip hb-in" style={{ '--i': 0 }}>
-            <span className="hb__dot" aria-hidden="true" />
-            ITPL Main Road · Whitefield, Bengaluru
-          </p>
           <h1 className="hb__title">
             <span className="hb__line">
               <span style={{ '--i': 1 }}>Live Comfort.</span>
